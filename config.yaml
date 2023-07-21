@@ -1,0 +1,13 @@
+################################################################################
+### SHOPIFY PLUGIN SETTINGS
+################################################################################
+## SHOPIFY_API_KEY = "your_shopify_api_key"
+## SHOPIFY_PASSWORD = "your_shopify_password"
+## STORE_URL = "your_store_url.myshopify.com"
+# SHOPIFY_API_KEY: 
+# SHOPIFY_API_SECRET: 
+# SHOPIFY_PASSWORD: 
+# STORE_URL: 
+# API_VERSION: 2023-04
+# SHOP_NAME: 
+# STORE_PROTOCOL: https
