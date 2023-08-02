@@ -7,12 +7,14 @@ from pydantic import BaseModel, Field, root_validator
 
 # Local application/library specific imports
 from superagi.tools.base_tool import BaseTool
-from superagi.tools.shopify.shopify_llm import LLMInput, ShopifyLLM
-from superagi.tools.shopify.shopify_config import ShopifyConfig
 from superagi.llms.base_llm import BaseLlm
 from superagi.resource_manager.file_manager import FileManager
 from superagi.lib.logger import logger
 from superagi.tools.tool_response_query_manager import ToolResponseQueryManager
+
+# Local shopify specific imports
+from shopify_llm import LLMInput, ShopifyLLM
+from shopify_config import ShopifyConfig
 
 
 class GetAllSort(BaseModel):

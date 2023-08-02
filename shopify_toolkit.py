@@ -2,11 +2,15 @@ from abc import ABC
 from typing import List
 
 from superagi.tools.base_tool import BaseToolkit, BaseTool
-from superagi.tools.shopify.get_all_product_data import AllProductDataTool
-from superagi.tools.shopify.create_product import CreateProductTool
-from superagi.tools.shopify.get_all_products import GetAllProductsTool
-from superagi.tools.shopify.get_basic_product_data import GetProductTool
-from superagi.tools.shopify.search_products import SearchProductsTool
+
+# Local shopify specific imports
+from shopify_llm import LLMInput, ShopifyLLM
+from shopify_config import ShopifyConfig
+from get_all_product_data import AllProductDataTool
+from create_product import CreateProductTool
+from get_all_products import GetAllProductsTool
+from get_basic_product_data import GetProductTool
+from search_products import SearchProductsTool
 # from superagi.tools.shopify.update_product import UpdateProductTool
 
 
