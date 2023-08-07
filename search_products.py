@@ -46,7 +46,7 @@ class SearchProductsTool(BaseTool):
     class Config:
         arbitrary_types_allowed = True
 
-    def _execute(self, title: str = None, product_type: str = None, vendor: str = None) -> List[Tuple[int, str]]:
+    def _execute(self, title: Optional[str] = None, product_type: Optional[str] = None, vendor: Optional[str] = None) -> List[Tuple[int, str]]:
         """
         Execute the search products tool.
 
