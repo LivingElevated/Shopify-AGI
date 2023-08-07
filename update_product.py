@@ -218,6 +218,32 @@ class UpdateProductTool(BaseTool):
                 return old_value
         else:
             return new_value if new_value is not None else old_value
+        
+    def _generate_price_based_on_flag(self, generate_flag: bool, old_value: str, new_value: str, title, description, product_type, tags) -> Tuple[str, Optional[str]]:
+        if generate_flag:
+            if new_value:
+                return new_value, None
+            else:
+                price, price_metadata = self._generate_specific_price(
+                    title, description, product_type, tags)
+                return price, price_metadata
+        elif new_value:
+            return new_value, None
+        else:
+            return old_value, None
+
+    def _generate_vendor_based_on_flag(self, generate_flag: bool, old_value: str, new_value: str, title, description, product_type, tags, price) -> Tuple[str, Optional[str]]:
+        if generate_flag:
+            if new_value:
+                return new_value, None
+            else:
+                vendor, vendor_metadata = self._generate_specific_vendor(
+                    title, description, product_type, tags, price)
+                return vendor, vendor_metadata
+        elif new_value:
+            return new_value, None
+        else:
+            return old_value, None
 
     def trim_product_type(self, product_type: str, max_length: int) -> Tuple[str, Optional[str]]:
         """
@@ -392,165 +418,91 @@ class UpdateProductTool(BaseTool):
         context_details_str = ', '.join(
             [detail for detail in context_details if detail is not None])
 
-        return (
-            f"Generate a catchy product title based on the provided title '{input_data.title}'. "
-            f"Product context details: {context_details_str}."
-        )
+        if input_data.title:  # If both description and product type are provided
+            task_description = (
+                f"Generate a catchy product title based on the provided title '{input_data.title}'. "
+                f"Product context details: {context_details_str}."
+            )
+        else:  # If there's no provided title, generate a catchy product title based on the existing title
+            task_description = (
+                f"Generate a catchy product title based on the existing title '{product.title}'. "
+                f"Product context details: {context_details_str}."
+            )
 
+        return task_description
 
     def generate_description_task_description(self, product: shopify.Product, input_data: UpdateProductInput) -> str:
         context_details = [
-            f"Existing Title: {product.title}" if product.title else None,
+            f"Existing Description: {self.html_to_plain_text(product.body_html)}" if product.body_html else None,
             f"Product Type: {input_data.product_type}" if input_data.product_type else None,
             f"Vendor: {input_data.vendor}" if input_data.vendor else None,
-            f"Existing Description: {self.html_to_plain_text(product.body_html)}" if product.body_html else None
+            f"Tags: {input_data.tags}" if input_data.tags else None,
+            f"Price: {input_data.price}" if input_data.price else None
         ]
 
         context_details_str = ', '.join(
             [detail for detail in context_details if detail is not None])
 
-        return (
-            f"Generate a product description based on the provided description '{input_data.description}'. "
-            f"Product context details: {context_details_str}."
-        )
+        if input_data.description:
+            task_description = (
+                f"Write a captivating product description (between 1500 and 5000 characters) based on the provided description '{input_data.description}'. "
+                f"Product context details: {context_details_str}."
+            )
+        else:
+            task_description = (
+                f"Write a captivating product description (between 1500 and 5000 characters) based on the existing description. "
+                f"Product context details: {context_details_str}."
+            )
 
-    # Similar methods for other input values...
+        return task_description
 
-
-    def generate_vendor_task_description(self, product: shopify.Product, input_data: UpdateProductInput) -> str:
-        context_details = [
-            f"Existing Title: {product.title}" if product.title else None,
-            f"Product Type: {input_data.product_type}" if input_data.product_type else None,
-            f"Existing Description: {self.html_to_plain_text(product.body_html)}" if product.body_html else None
-        ]
-
-        context_details_str = ', '.join(
-            [detail for detail in context_details if detail is not None])
-
-        return (
-            f"Generate a vendor based on the provided vendor '{input_data.vendor}'. "
-            f"Product context details: {context_details_str}."
-        )
-    
     def generate_product_type_task_description(self, product: shopify.Product, input_data: UpdateProductInput) -> str:
         context_details = [
-            f"Existing Title: {product.title}" if product.title else None,
+            f"Existing Product Type: {product.product_type}" if product.product_type else None,
             f"Vendor: {input_data.vendor}" if input_data.vendor else None,
-            f"Existing Description: {self.html_to_plain_text(product.body_html)}" if product.body_html else None
+            f"Tags: {input_data.tags}" if input_data.tags else None,
+            f"Price: {input_data.price}" if input_data.price else None
         ]
 
         context_details_str = ', '.join(
             [detail for detail in context_details if detail is not None])
 
-        return (
-            f"Generate a product type based on the provided type '{input_data.product_type}'. "
-            f"Product context details: {context_details_str}."
-        )
+        if input_data.product_type:
+            task_description = (
+                f"Suggest a suitable product type based on the provided product type '{input_data.product_type}'. "
+                f"Product context details: {context_details_str}."
+            )
+        else:
+            task_description = (
+                f"Suggest a suitable product type based on the existing product type '{product.product_type}'. "
+                f"Product context details: {context_details_str}."
+            )
 
+        return task_description
 
     def generate_tags_task_description(self, product: shopify.Product, input_data: UpdateProductInput) -> str:
         context_details = [
-            f"Existing Title: {product.title}" if product.title else None,
+            f"Existing Tags: {product.tags}" if product.tags else None,
             f"Product Type: {input_data.product_type}" if input_data.product_type else None,
             f"Vendor: {input_data.vendor}" if input_data.vendor else None,
-            f"Existing Description: {self.html_to_plain_text(product.body_html)}" if product.body_html else None
+            f"Price: {input_data.price}" if input_data.price else None
         ]
 
         context_details_str = ', '.join(
             [detail for detail in context_details if detail is not None])
 
-        return (
-            f"Generate tags based on the provided tags '{input_data.tags}'. "
-            f"Product context details: {context_details_str}."
-        )
+        if input_data.tags:
+            task_description = (
+                f"Generate tags based on the provided tags '{input_data.tags}'. "
+                f"Product context details: {context_details_str}."
+            )
+        else:
+            task_description = (
+                f"Generate tags based on the existing tags '{product.tags}'. "
+                f"Product context details: {context_details_str}."
+            )
 
-
-    def generate_price_task_description(self, product: shopify.Product, input_data: UpdateProductInput) -> str:
-        context_details = [
-            f"Existing Title: {product.title}" if product.title else None,
-            f"Product Type: {input_data.product_type}" if input_data.product_type else None,
-            f"Vendor: {input_data.vendor}" if input_data.vendor else None,
-            f"Existing Description: {self.html_to_plain_text(product.body_html)}" if product.body_html else None
-        ]
-
-        context_details_str = ', '.join(
-            [detail for detail in context_details if detail is not None])
-
-        return (
-            f"Generate a suitable price based on the provided price '{input_data.price}'. "
-            f"Product context details: {context_details_str}."
-        )
-    
-    def update_product(product_id: str, title: Optional[str] = None, description: Optional[str] = None, tags: Optional[str] = None, metafields: Optional[List[Dict[str, Union[str, int, float, bool]]]] = None) -> Optional[shopify.Product]:
-        """Update a product on Shopify.
-
-        Args:
-            product_id (str): The ID of the product to update.
-            title (Optional[str], optional): The new title of the product. Defaults to None.
-            description (Optional[str], optional): The new description of the product. Defaults to None.
-            tags (Optional[str], optional): The new tags for the product. Defaults to None.
-            metafields (Optional[List[Dict[str, Union[str, int, float, bool]]]], optional): The new metafields for the product. Defaults to None.
-            print_details (bool, optional): Whether to print the updated product details. Defaults to False.
-
-        Returns:
-            Optional[shopify.Product]: The updated product if successful, or None if the product is not found.
-        """
-
-        product = shopify.Product.find(product_id)
-
-        if not product:
-            print(f"Product {product_id} not found.")
-            return None
-
-        if product:
-            if title:
-                product.title = title
-
-            if description:
-                product.body_html = description
-
-            if tags:
-                product.tags = tags
-
-            if metafields and isinstance(metafields, list):
-                for metafield_data in metafields:
-                    if isinstance(metafield_data, dict):
-                        try:
-                            new_metafield = shopify.Metafield(**metafield_data)
-                            product.add_metafield(new_metafield)
-                            print(f"Added metafield: {metafield_data}")
-                        except Exception as e:
-                            print(
-                                f"Error adding metafield: {metafield_data}. Error: {str(e)}")
-                    else:
-                        print(f"Ignoring invalid metafield data: {metafield_data}")
-
-            try:
-                product.save()
-            except Exception as e:
-                print(f"Error saving product: {str(e)}")
-                return None
-
-            print(f"Product {product_id} updated successfully.")
-            print("Updated Product Details:")
-            print(f"ID: {product.id}")
-            print(f"Title: {product.title}")
-            print(f"Description: {product.body_html}")
-            print("Metafields:")
-            metafields = shopify.Metafield.find(resource_id=product.id)
-            for metafield in metafields:
-                print(f"Namespace: {metafield.namespace}")
-                print(f"Key: {metafield.key}")
-                print(f"Value: {metafield.value}")
-                if hasattr(metafield, 'value_type'):  # Check if 'value_type' attribute exists
-                    print(f"Value Type: {metafield.value_type}")
-                print("----")
-
-            # Get the updated product details using get_product
-            updated_product = get_product(product_id)
-            return updated_product
-
-        return None
+        return task_description
 
     def _execute(self, input_data: UpdateProductInput) -> Optional[shopify.Product]:
         """Update a product on Shopify.
@@ -577,54 +529,32 @@ class UpdateProductTool(BaseTool):
             print(f"Product {product_id} not found.")
             return None
 
-        # Handle each product input value based on the boolean flags
-        title = self._generate_value_based_on_flag(
-            input_data.generate_title, product.title, input_data.title,
-            self.generate_title_task_description(product, input_data)
-        )
+        if product:
+            # Handle each product input value based on the boolean flags
+            title = self._generate_value_based_on_flag(
+                input_data.generate_title, product.title, input_data.title,
+                self.generate_title_task_description(product, input_data)
+            )
 
-        description = self._generate_value_based_on_flag(
-            input_data.generate_description, self.html_to_plain_text(
-                product.body_html), input_data.description,
-            self.generate_description_task_description(product, input_data)
-        )
+            description = self._generate_value_based_on_flag(
+                input_data.generate_description, self.html_to_plain_text(
+                    product.body_html), input_data.description,
+                self.generate_description_task_description(product, input_data)
+            )
 
-        product_type = self._generate_value_based_on_flag(
-            input_data.generate_product_type, product.product_type, input_data.product_type,
-            self.generate_product_type_task_description(product, input_data)
-        )
+            product_type = self._generate_value_based_on_flag(
+                input_data.generate_product_type, product.product_type, input_data.product_type,
+                self.generate_product_type_task_description(product, input_data)
+            )
 
-        vendor = self._generate_value_based_on_flag(
-            input_data.generate_vendor, product.vendor, input_data.vendor,
-            self.generate_vendor_task_description(product, input_data)
-        )
-
-        tags = self._generate_value_based_on_flag(
-            input_data.generate_tags, product.tags, input_data.tags,
-            self.generate_tags_task_description(product, input_data)
-        )
-
-        price = self._generate_value_based_on_flag(
-            input_data.generate_price, product.variants[0].price if product.variants else None, input_data.price,
-            self.generate_price_task_description(product, input_data)
-        )
+            tags = self._generate_value_based_on_flag(
+                input_data.generate_tags, product.tags, input_data.tags,
+                self.generate_tags_task_description(product, input_data)
+            )
 
         # List of small words to be in lowercase (customize it according to your needs)
         small_words = ['a', 'an', 'and', 'as', 'at', 'but', 'by', 'for',
                     'if', 'in', 'nor', 'of', 'on', 'or', 'so', 'the', 'to', 'up', 'yet']
-
-        if not title:
-            if description and product_type:  # If both description and product type are provided
-                title = self.generate_info(
-                    f"Write a catchy product title for a {product_type} described as {description}.")
-            elif description:  # If only description is provided
-                title = self.generate_info(
-                    f"Write a catchy product title for a product described as {description}.")
-            elif product_type:  # If only product type is provided
-                title = self.generate_info(
-                    f"Write a catchy product title for a {product_type}.")
-            else:  # If there's no product type either, generate a title without context
-                title = self.generate_info(f"Write a catchy product title.")
 
         # Capitalize every word in the title
         title = title.title()
@@ -643,37 +573,34 @@ class UpdateProductTool(BaseTool):
         price_metadata = None
         type_metadata = None
 
-        # Create the prompts based on whether or not there's additional context
-        prompt_description = f"Write a captivating product description (between 1500 and 5000 characters) for a {title}." + (
-            f" Context: {context}." if context else "")
-        prompt_product_type = f"Suggest a suitable type for a product with title {title}" + (
-            f" and description {description}" if description else "") + (f" Context: {context}." if context else "")
-        prompt_tags = f"Suggest suitable tags for a product with title {title}" + (f", description {description}" if description else "") + (
-            f", and type {product_type}" if product_type else "") + (f" Context: {context}." if context else "")
-
-        if not description:
-            description = self.generate_info(prompt_description)
-            # Remove empty lines
+        if description:
             description = "\n".join(
                 [line for line in description.split('\n') if line.strip()])
             # Convert to HTML by adding <p> tags for each paragraph
             description = '<p>' + description.replace('\n', '</p><p>') + '</p>'
             description = re.sub(r'(</p><p>)+', '</p><p>', description)  # Remove empty paragraphs
-        if not product_type:
-            product_type = self.generate_info(prompt_product_type)
+
+        if product_type:
             max_length = 255
             if len(product_type) > max_length:  # Replace with the actual maximum length
                 product_type, type_metadata = self.trim_product_type(
                     product_type, max_length)
-        if not tags:
-            tags = self.generate_info(prompt_tags)
+                
+        if tags:
             tags, tags_metadata = self.trim_tags(tags, 255)
-        if not price:
-            price, price_metadata = self._generate_specific_price(
-                title, description, product_type, tags)
-        if not vendor:
-            vendor, vendor_metadata = self._generate_specific_vendor(
-                title, description, product_type, tags, price)
+
+        price, price_metadata = self._generate_price_based_on_flag(
+            input_data.generate_price,  # Generate flag
+            product.variants[0].price if product.variants else None,  # Old value
+            input_data.price,  # New value
+            title, description, product_type, tags   # Additional arguments
+        )
+        vendor, vendor_metadata = self._generate_vendor_based_on_flag(
+            input_data.generate_vendor,    # Generate flag
+            product.vendor,  # Old value
+            input_data.vendor,  # New value
+            title, description, product_type, tags, price  # Additional arguments
+            )
 
         try:
             product.body_html = self.validate_field(
