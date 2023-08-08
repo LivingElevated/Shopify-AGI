@@ -48,32 +48,32 @@ class UpdateProductInput(BaseModel):
         description="The ID of the product to update."
     )
     title: Optional[str] = Field(
-        ..., 
-        description="Title of the product."
+        None, 
+        description="Updated Title of the product."
         )
     description: Optional[str] = Field(
         None, 
-        description="Description of the product. If None, an AI-generated description will be used."
+        description="Updated description of the product."
         )
     product_type: Optional[str] = Field(
         None, 
-        description="Type of the product. If None, an AI-generated product type will be used."
+        description="Updated Type of the product."
         )
     vendor: Optional[str] = Field(
         None, 
-        description="Vendor of the product. If None, an AI-generated vendor will be used."
+        description="Updated Vendor of the product."
         )
     tags: Optional[str] = Field(
         None,
-        description="Tags for the product. If None, AI-generated tags will be used."
+        description="Updated Tags for the product."
     )
     price: Optional[str] = Field(
         None, 
-        description="Price of the product. If None, an AI-generated price will be used."
+        description="Updated Price of the product."
         )
     context: Optional[str] = Field(
         None,
-        description="Optional context for the product. (ie. store name, theme, ect.)This will be used to generate AI-generated fields."
+        description="Optional context for the product. (ie. store name, theme, ect.) This will be used to generate AI-generated fields."
     )
 
 
