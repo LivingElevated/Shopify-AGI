@@ -218,7 +218,7 @@ class UpdateProductTool(BaseTool):
                 return old_value
         else:
             return new_value if new_value is not None else old_value
-    ''' 
+
     def _generate_price_based_on_flag(self, generate_flag: bool, old_value: str, new_value: str, title, description, product_type, tags) -> Tuple[str, Optional[str]]:
         if generate_flag:
             if new_value:
@@ -244,7 +244,7 @@ class UpdateProductTool(BaseTool):
             return new_value, None
         else:
             return old_value, None
-    '''
+        
     def trim_product_type(self, product_type: str, max_length: int) -> Tuple[str, Optional[str]]:
         """
         Trim the product_type string to the maximum length and return the original product_type if it exceeded max_length.
@@ -503,23 +503,14 @@ class UpdateProductTool(BaseTool):
             )
 
         return task_description
+    
+    def _init_shopify(self):
+        shop_config = ShopifyConfig()
+        return shop_config.get_shop()
 
     def _execute(
         self,
-        generate_title: bool,
-        generate_description: bool,
-        generate_product_type: bool,
-        generate_vendor: bool,
-        generate_tags: bool,
-        generate_price: bool,
-        product_id: str,
-        title: Optional[str] = None,
-        description: Optional[str] = None,
-        product_type: Optional[str] = None,
-        vendor: Optional[str] = None,
-        tags: Optional[str] = None,
-        price: Optional[str] = None,
-        context: Optional[str] = None
+        input_data: UpdateProductInput
     ) -> Optional[shopify.Product]:
         """Update a product on Shopify.
 
@@ -542,28 +533,13 @@ class UpdateProductTool(BaseTool):
         Returns:
             Optional[shopify.Product]: The updated product if successful, or None if there was an error.
         """
-        product = shopify.Product.find(product_id)
+        # Initialize Shopify API
+        shop = self._init_shopify()
+        product = shopify.Product.find(input_data.product_id)
 
         if not product:
-            print(f"Product {product_id} not found.")
+            print(f"Product {input_data.product_id} not found.")
             return None
-
-        input_data = (
-            generate_title,
-            generate_description,
-            generate_product_type,
-            generate_vendor,
-            generate_tags,
-            generate_price,
-            product_id,
-            title,
-            description,
-            product_type,
-            vendor,
-            tags,
-            price,
-            context
-        )
 
         if product:
             # Handle each product input value based on the boolean flags
@@ -624,8 +600,6 @@ class UpdateProductTool(BaseTool):
                 
         if tags:
             tags, tags_metadata = self.trim_tags(tags, 255)
-        
-        '''
 
         price, price_metadata = self._generate_price_based_on_flag(
             input_data.generate_price,  # Generate flag
@@ -639,7 +613,7 @@ class UpdateProductTool(BaseTool):
             input_data.vendor,  # New value
             title, description, product_type, tags, price  # Additional arguments
             )
-        '''
+
         try:
             product.body_html = self.validate_field(
                 description, 65535, "Description", field_type="html", required=True)
