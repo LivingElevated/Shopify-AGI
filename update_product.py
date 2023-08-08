@@ -407,20 +407,20 @@ class UpdateProductTool(BaseTool):
         text = '\n'.join(p.get_text() for p in soup.find_all('p'))
         return text
     
-    def generate_title_task_description(self, product, input_data) -> str:
+    def generate_title_task_description(self, product, title, product_type, vendor) -> str:
         context_details = [
             f"Existing Title: {product.title}" if product.title else None,
-            f"Product Type: {input_data.product_type}" if input_data.product_type else None,
-            f"Vendor: {input_data.vendor}" if input_data.vendor else None,
+            f"Product Type: {product_type}" if product_type else None,
+            f"Vendor: {vendor}" if vendor else None,
             f"Existing Description: {self.html_to_plain_text(product.body_html)}" if product.body_html else None
         ]
 
         context_details_str = ', '.join(
             [detail for detail in context_details if detail is not None])
 
-        if input_data.title:  # If both description and product type are provided
+        if title:  # If both description and product type are provided
             task_description = (
-                f"Generate a catchy product title based on the provided title '{input_data.title}'. "
+                f"Generate a catchy product title based on the provided title '{title}'. "
                 f"Product context details: {context_details_str}."
             )
         else:  # If there's no provided title, generate a catchy product title based on the existing title
@@ -431,21 +431,22 @@ class UpdateProductTool(BaseTool):
 
         return task_description
 
-    def generate_description_task_description(self, product, input_data) -> str:
+    def generate_description_task_description(self, product, title, description, product_type, vendor, tags, price) -> str:
         context_details = [
+            f"Title: {title}" if title else None,
             f"Existing Description: {self.html_to_plain_text(product.body_html)}" if product.body_html else None,
-            f"Product Type: {input_data.product_type}" if input_data.product_type else None,
-            f"Vendor: {input_data.vendor}" if input_data.vendor else None,
-            f"Tags: {input_data.tags}" if input_data.tags else None,
-            f"Price: {input_data.price}" if input_data.price else None
+            f"Product Type: {product_type}" if product_type else None,
+            f"Vendor: {vendor}" if vendor else None,
+            f"Tags: {tags}" if tags else None,
+            f"Price: {price}" if price else None
         ]
 
         context_details_str = ', '.join(
             [detail for detail in context_details if detail is not None])
 
-        if input_data.description:
+        if description:
             task_description = (
-                f"Write a captivating product description (between 1500 and 5000 characters) based on the provided description '{input_data.description}'. "
+                f"Write a captivating product description (between 1500 and 5000 characters) based on the provided description '{description}'. "
                 f"Product context details: {context_details_str}."
             )
         else:
@@ -456,20 +457,22 @@ class UpdateProductTool(BaseTool):
 
         return task_description
 
-    def generate_product_type_task_description(self, product, input_data) -> str:
+    def generate_product_type_task_description(self, product, title, description, product_type, vendor, tags, price) -> str:
         context_details = [
+            f"Title: {title}" if title else None,
+            f"Description: {description}" if description else None,
             f"Existing Product Type: {product.product_type}" if product.product_type else None,
-            f"Vendor: {input_data.vendor}" if input_data.vendor else None,
-            f"Tags: {input_data.tags}" if input_data.tags else None,
-            f"Price: {input_data.price}" if input_data.price else None
+            f"Vendor: {vendor}" if vendor else None,
+            f"Tags: {tags}" if tags else None,
+            f"Price: {price}" if price else None
         ]
 
         context_details_str = ', '.join(
             [detail for detail in context_details if detail is not None])
 
-        if input_data.product_type:
+        if product_type:
             task_description = (
-                f"Suggest a suitable product type based on the provided product type '{input_data.product_type}'. "
+                f"Suggest a suitable product type based on the provided product type '{product_type}'. "
                 f"Product context details: {context_details_str}."
             )
         else:
@@ -480,20 +483,22 @@ class UpdateProductTool(BaseTool):
 
         return task_description
 
-    def generate_tags_task_description(self, product, input_data) -> str:
+    def generate_tags_task_description(self, product, title, description, product_type, vendor, tags, price) -> str:
         context_details = [
+            f"Title: {title}" if title else None,
+            f"Description: {description}" if description else None,
             f"Existing Tags: {product.tags}" if product.tags else None,
-            f"Product Type: {input_data.product_type}" if input_data.product_type else None,
-            f"Vendor: {input_data.vendor}" if input_data.vendor else None,
-            f"Price: {input_data.price}" if input_data.price else None
+            f"Product Type: {product_type}" if product_type else None,
+            f"Vendor: {vendor}" if vendor else None,
+            f"Price: {price}" if price else None
         ]
 
         context_details_str = ', '.join(
             [detail for detail in context_details if detail is not None])
 
-        if input_data.tags:
+        if tags:
             task_description = (
-                f"Generate tags based on the provided tags '{input_data.tags}'. "
+                f"Generate tags based on the provided tags '{tags}'. "
                 f"Product context details: {context_details_str}."
             )
         else:
@@ -510,7 +515,20 @@ class UpdateProductTool(BaseTool):
 
     def _execute(
         self,
-        input_data: UpdateProductInput
+        generate_title: bool,
+        generate_description: bool,
+        generate_product_type: bool,
+        generate_vendor: bool,
+        generate_tags: bool,
+        generate_price: bool,
+        product_id: str,
+        title: Optional[str] = None,
+        description: Optional[str] = None,
+        product_type: Optional[str] = None,
+        vendor: Optional[str] = None,
+        tags: Optional[str] = None,
+        price: Optional[str] = None,
+        context: Optional[str] = None
     ) -> Optional[shopify.Product]:
         """Update a product on Shopify.
 
@@ -533,35 +551,40 @@ class UpdateProductTool(BaseTool):
         Returns:
             Optional[shopify.Product]: The updated product if successful, or None if there was an error.
         """
+
         # Initialize Shopify API
         shop = self._init_shopify()
-        product = shopify.Product.find(input_data.product_id)
+        product = shopify.Product.find(product_id)
 
         if not product:
-            print(f"Product {input_data.product_id} not found.")
+            print(f"Product {product_id} not found.")
             return None
 
         if product:
             # Handle each product input value based on the boolean flags
             title = self._generate_value_based_on_flag(
-                input_data.generate_title, product.title, input_data.title,
-                self.generate_title_task_description(product, input_data)
+                generate_title, product.title, title,
+                self.generate_title_task_description(
+                    product, title, product_type, vendor)
             )
 
             description = self._generate_value_based_on_flag(
-                input_data.generate_description, self.html_to_plain_text(
-                    product.body_html), input_data.description,
-                self.generate_description_task_description(product, input_data)
+                generate_description, self.html_to_plain_text(
+                    product.body_html), description,
+                self.generate_description_task_description(
+                    product, title, description, product_type, vendor, tags, price)
             )
 
             product_type = self._generate_value_based_on_flag(
-                input_data.generate_product_type, product.product_type, input_data.product_type,
-                self.generate_product_type_task_description(product, input_data)
+                generate_product_type, product.product_type, product_type,
+                self.generate_product_type_task_description(
+                    product, title, description, product_type, vendor, tags, price)
             )
 
             tags = self._generate_value_based_on_flag(
-                input_data.generate_tags, product.tags, input_data.tags,
-                self.generate_tags_task_description(product, input_data)
+                generate_tags, product.tags, tags,
+                self.generate_tags_task_description(
+                    product, title, description, product_type, vendor, tags, price)
             )
 
         # List of small words to be in lowercase (customize it according to your needs)
@@ -602,15 +625,15 @@ class UpdateProductTool(BaseTool):
             tags, tags_metadata = self.trim_tags(tags, 255)
 
         price, price_metadata = self._generate_price_based_on_flag(
-            input_data.generate_price,  # Generate flag
+            generate_price,  # Generate flag
             product.variants[0].price if product.variants else None,  # Old value
-            input_data.price,  # New value
+            price,  # New value
             title, description, product_type, tags   # Additional arguments
         )
         vendor, vendor_metadata = self._generate_vendor_based_on_flag(
-            input_data.generate_vendor,    # Generate flag
+            generate_vendor,    # Generate flag
             product.vendor,  # Old value
-            input_data.vendor,  # New value
+            vendor,  # New value
             title, description, product_type, tags, price  # Additional arguments
             )
 
