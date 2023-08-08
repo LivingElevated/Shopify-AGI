@@ -24,11 +24,11 @@ class SearchProductsInput(BaseModel):
     )
     product_type: Optional[str] = Field(
         None,
-        description = "Product type to filter the search."
+        description="Product type to filter the search."
     )
     vendor: Optional[str] = Field(
         None,
-        description = "Vendor to filter the search."
+        description="Vendor to filter the search."
     )
 
 
@@ -61,37 +61,35 @@ class SearchProductsTool(BaseTool):
         """
         # Validate input parameters
         if title is None and product_type is None and vendor is None:
-            print("At least one search parameter (title, product_type, or vendor) must be provided.")
+            print(
+                "At least one search parameter (title, product_type, or vendor) must be provided.")
             raise ValueError(
                 "At least one search parameter (title, product_type, or vendor) must be provided.")
-        
+
         lowercase_title = title.lower() if title else None
         lowercase_product_type = product_type.lower() if product_type else None
         lowercase_vendor = vendor.lower() if vendor else None
         matching_products = []
 
-        # Set the initial values for pagination
-        get_next_page = True
-        limit = 100
-        since_id = 0
+        output = ['Product ID', 'Title', 'Price']
 
-        while get_next_page:
-            # Retrieve the products using the Shopify API with pagination parameters
-            products = shopify.Product.find(limit=limit, since_id=since_id)
+        sortby = 'default'
 
-            for product in products:
-                if (not lowercase_title or lowercase_title in product.title.lower()) and \
-                   (not lowercase_product_type or lowercase_product_type in product.product_type.lower()) and \
-                   (not lowercase_vendor or lowercase_vendor in product.vendor.lower()):
-                    matching_products.append((product.id, product.title))
+        shop = self._init_shopify()
+        products = self._get_all_products(shop, sortby)
 
-            # Check if there are more pages of results
-            if len(products) < limit:
-                get_next_page = False
-            else:
-                since_id = products[-1].id
+        # Filter the products based on the search criteria
+        for product in products:
+            if (not lowercase_title or lowercase_title in product.title.lower()) and \
+                (not lowercase_product_type or lowercase_product_type in product.product_type.lower()) and \
+                    (not lowercase_vendor or lowercase_vendor in product.vendor.lower()):
+                matching_products.append((product.id, product.title))
 
-        return self._pretty_product_info(matching_products, output=["Product ID", "Title", "Price"], sortby="default")
+        pretty_product_info = self._pretty_product_info(
+            matching_products, output, sortby)
+
+        logger.info(f"Found {len(products)} products.")
+        return pretty_product_info
 
     def _init_shopify(self):
         shop_config = ShopifyConfig()
@@ -139,11 +137,11 @@ class SearchProductsTool(BaseTool):
 
         return info
 
-    def _pretty_product_info(self, products: List[Dict], output: List[str], sortby: str):
+    def _pretty_product_info(self, matching_products: List[Dict], output: List[str], sortby: str):
         product_info_list = []
         pretty_product_info = ""
 
-        for product in products:
+        for product in matching_products:
             # generate product details directly
             info = self._generate_product_details(product, output)
             product_info_list.append(info)
@@ -173,7 +171,7 @@ class SearchProductsTool(BaseTool):
 
         # Convert the keys in the first dict in product_info_list to their actual versions
         headers = [field_to_header.get(key, key)
-                for key in product_info_list[0].keys()]
+                   for key in product_info_list[0].keys()]
 
         # Convert the dictionaries in product_info_list to lists
         product_info_list = [list(d.values()) for d in product_info_list]
