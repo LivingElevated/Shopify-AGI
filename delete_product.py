@@ -65,9 +65,10 @@ class DeleteProductTool(BaseTool):
             self.resource_manager.write_file(file_name, product_details_str)
 
             delete_message = dedent(f"""
-                                    "message": f"Successfully deleted {product.id} and writtent to file: {file_name}"
+                                    Successfully deleted Product ID: {product.id}
+                                    Backup written to file: "{file_name}" in the current resource manager output directory.
 
-                                    "product_details":
+                                    Product Details:
                                     {product_details_str}
                                     
                                     """)
