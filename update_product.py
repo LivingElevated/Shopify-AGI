@@ -218,7 +218,7 @@ class UpdateProductTool(BaseTool):
                 return old_value
         else:
             return new_value if new_value is not None else old_value
-        
+    ''' 
     def _generate_price_based_on_flag(self, generate_flag: bool, old_value: str, new_value: str, title, description, product_type, tags) -> Tuple[str, Optional[str]]:
         if generate_flag:
             if new_value:
@@ -244,7 +244,7 @@ class UpdateProductTool(BaseTool):
             return new_value, None
         else:
             return old_value, None
-
+    '''
     def trim_product_type(self, product_type: str, max_length: int) -> Tuple[str, Optional[str]]:
         """
         Trim the product_type string to the maximum length and return the original product_type if it exceeded max_length.
@@ -624,6 +624,8 @@ class UpdateProductTool(BaseTool):
                 
         if tags:
             tags, tags_metadata = self.trim_tags(tags, 255)
+        
+        '''
 
         price, price_metadata = self._generate_price_based_on_flag(
             input_data.generate_price,  # Generate flag
@@ -637,7 +639,7 @@ class UpdateProductTool(BaseTool):
             input_data.vendor,  # New value
             title, description, product_type, tags, price  # Additional arguments
             )
-
+        '''
         try:
             product.body_html = self.validate_field(
                 description, 65535, "Description", field_type="html", required=True)
