@@ -179,6 +179,6 @@ class SearchProductsTool(BaseTool):
         # Now pass headers to tabulate()
         table = tabulate(product_info_list, headers=headers, tablefmt="pretty")
         table = table.replace(" ", "\u00A0")
-        pretty_product_info = f"Found {len(products)} products:\n{table}"
+        pretty_product_info = f"Found {len(matching_products)} products:\n{table}"
 
         return pretty_product_info
