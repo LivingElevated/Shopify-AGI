@@ -1,6 +1,4 @@
 import shopify
-import json
-from textwrap import dedent
 from typing import Type, Union, Dict, Any, List, Optional, Tuple
 
 from bs4 import BeautifulSoup
@@ -18,47 +16,56 @@ from shopify_llm import LLMInput, ShopifyLLM
 from shopify_config import ShopifyConfig
 
 
-class AllProductDataInput(BaseModel):
-    product_identifier: Union[str, int] = Field(
-        ...,
-        description="The ID or the title of the product to fetch."
+class DeleteProductInput(BaseModel):
+    product_id: str = Field(
+        ..., 
+        description= "The ID of the product to delete. Must be a number. (Must be called by the product ID to avoid accidental deletion)"
     )
 
 
-class AllProductDataTool(BaseTool):
+class DeleteProductTool(BaseTool):
     """
-    All Product Data Tool
+    Delete Product Tool
     Attributes:
         name : The name of the tool.
         description : The description of the tool.
         args_schema : The args schema.
     """
-    name: str = "Get All Product Data"
-    description: str = "Fetch all product information from Shopify"
-    args_schema: Type[BaseModel] = AllProductDataInput
+    name: str = "Delete Product Tool"
+    description: str = "Delete a single product from your Shopify store. (Must be called by the product ID)"
+    args_schema: Type[BaseModel] = DeleteProductInput
 
     class Config:
         arbitrary_types_allowed = True
-        
-    def _execute(self, product_identifier: Union[str, int]) -> Optional[Dict[str, Union[str, List[Dict[str, str]]]]]:
+
+    def _execute(self, product_id: str) -> Optional[Dict[str, Union[str, List[Dict[str, str]]]]]:
         """
-        Execute the get product tool.
+        Delete a product from Shopify.
         Args:
-            product_identifier : The ID or the title of the product to fetch.
+
+        product_id(str): The ID of the product to delete.
+
         Returns:
-            A dictionary containing all the product attributes if found, or None otherwise.
+            A dictionary containing the product attributes if found, or None otherwise.
         """
         shop = self._init_shopify()
-        product = self._get_product_by_identifier(shop, product_identifier)
+
+        product = self._get_product_by_identifier(shop, product_id)
 
         if product:
             product_details_str = self._generate_product_details(product)
             self._log_product_details(product_details_str)
-
-            return product_details_str
-
-        return None
-
+            product.destroy()
+            return {
+                "message": f"Successfully deleted {product.id}",
+                "product_details": product_details_str
+            }
+        
+        else:
+            logger.info(f"Product {product_id} not found.")
+            print(f"Product {product_id} not found.")
+            raise ValueError(f"Product {product_id} not found.")
+        
     def _init_shopify(self):
         shop_config = ShopifyConfig()
         return shop_config.get_shop()
@@ -73,9 +80,6 @@ class AllProductDataTool(BaseTool):
             return next((p for p in all_products if p.title.lower() == product_identifier.lower()), None)
 
     def _generate_product_details(self, product):
-        # Convert the product object to a dictionary
-        product_data = product.to_dict()
-
         # Compute the new lines outside of f-string
         metafields_values = ',\n'.join(
             [metafield.value for metafield in product.metafields()])
@@ -85,44 +89,36 @@ class AllProductDataTool(BaseTool):
         collections_names = ', '.join(
             [collection.title for collection in collections])
 
-        # Generate a pretty formatted output
-        product_details = dedent(f"""
+        product_details = f"""
             Title: {product.title}
 
-            Description:
+            Description: 
             {self.html_to_plain_text(product.body_html)}
 
             Product Type: {product.product_type}
 
             Vendor: {product.vendor}
 
-            Collections: {collections_names}
+            Collections:
+            {collections_names}
 
-            Tags: {product.tags}
+            Tags:
+            {product.tags}
 
             Price: {product.variants[0].price if product.variants else None}
 
             Product ID: {product.id}
 
-            Product Metafields: {', '.join([str(metafield) for metafield in product.metafields()])}
+            Product Metafields:
+            {', '.join([str(metafield) for metafield in product.metafields()])}
 
-            Metafields Values: {metafields_values}
-
-            Images: {json.dumps(product_data["images"], indent=2)}
-
-            Variants: {json.dumps(product_data["variants"], indent=2)}
-
-            Options: {json.dumps(product_data["options"], indent=2)}
-
-            Published At: {product.published_at}
-
-            Created At: {product.created_at}
-
-            Updated At: {product.updated_at}
-
-        """)
-
+            Metafields Values: 
+            {metafields_values}
+        """
         return product_details
+
+    def _log_product_details(self, product_details):
+        logger.info(product_details)
 
     def html_to_plain_text(self, html):
         """
@@ -137,10 +133,7 @@ class AllProductDataTool(BaseTool):
         if not isinstance(html, str):
             logger.error("html must be a string")
             raise ValueError("html must be a string")
-
+    
         soup = BeautifulSoup(html, "html.parser")
         text = '\n'.join(p.get_text() for p in soup.find_all('p'))
         return text
-
-    def _log_product_details(self, product_details):
-        logger.info(product_details)

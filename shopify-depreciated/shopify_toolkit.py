@@ -2,7 +2,7 @@ from abc import ABC
 from typing import List
 
 from superagi.tools.base_tool import BaseToolkit, BaseTool
-from superagi.tools.shopify.get_all_product_data import AllProductDataTool
+from superagi.tools.shopify.get_product_data import AllProductDataTool
 from superagi.tools.shopify.create_product import CreateProductTool
 from superagi.tools.shopify.get_all_products import GetAllProductsTool
 from superagi.tools.shopify.get_basic_product_data import GetProductTool
