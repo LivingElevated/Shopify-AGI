@@ -64,15 +64,20 @@ class DeleteProductTool(BaseTool):
             # Write product details to a file
             self.resource_manager.write_file(file_name, product_details_str)
 
-            return {
-                "message": f"Successfully deleted {product.id}",
-                "product_details": product_details_str
-            }
+            delete_message = dedent(f"""
+                                    "message": f"Successfully deleted {product.id} and writtent to file: {file_name}"
+
+                                    "product_details":
+                                    {product_details_str}
+                                    
+                                    """)
+
+            return delete_message
         
         else:
             logger.info(f"Product {product_id} not found.")
             print(f"Product {product_id} not found.")
-            raise ValueError(f"Product {product_id} not found.")
+            return ValueError(f"Product {product_id} not found.")
         
     def _init_shopify(self):
         shop_config = ShopifyConfig()
