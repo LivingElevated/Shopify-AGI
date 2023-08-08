@@ -59,6 +59,12 @@ class SearchProductsTool(BaseTool):
         Returns:
             List[Tuple[int, str]]: List of products that match the search criteria.
         """
+        # Validate input parameters
+        if title is None and product_type is None and vendor is None:
+            print("At least one search parameter (title, product_type, or vendor) must be provided.")
+            raise ValueError(
+                "At least one search parameter (title, product_type, or vendor) must be provided.")
+        
         lowercase_title = title.lower() if title else None
         lowercase_product_type = product_type.lower() if product_type else None
         lowercase_vendor = vendor.lower() if vendor else None

@@ -37,7 +37,7 @@ class CreateProductInput(BaseModel):
     tags: Optional[str] = Field(
         None,
         description="Tags for the product. If None, AI-generated tags will be used."
-    )
+        )
     price: Optional[str] = Field(
         None, 
         description="Price of the product. If None, an AI-generated price will be used."
@@ -45,7 +45,7 @@ class CreateProductInput(BaseModel):
     context: Optional[str] = Field(
         None,
         description="Optional context for the product. (ie. store name, theme, ect.)This will be used to generate AI-generated fields."
-    )
+        )
 
 
 class CreateProductTool(BaseTool):
