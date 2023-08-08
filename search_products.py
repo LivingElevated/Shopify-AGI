@@ -83,7 +83,7 @@ class SearchProductsTool(BaseTool):
             if (not lowercase_title or lowercase_title in product.title.lower()) and \
                 (not lowercase_product_type or lowercase_product_type in product.product_type.lower()) and \
                     (not lowercase_vendor or lowercase_vendor in product.vendor.lower()):
-                matching_products.append((product.id, product.title))
+                matching_products.append(product)
 
         pretty_product_info = self._pretty_product_info(
             matching_products, output, sortby)
