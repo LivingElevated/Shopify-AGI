@@ -520,8 +520,6 @@ class UpdateProductTool(BaseTool):
             Optional[shopify.Product]: The updated product if successful, or None if there was an error.
         """
 
-
-
         product_id = input_data.product_id
         product = shopify.Product.find(product_id)
 
