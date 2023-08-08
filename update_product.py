@@ -407,7 +407,7 @@ class UpdateProductTool(BaseTool):
         text = '\n'.join(p.get_text() for p in soup.find_all('p'))
         return text
     
-    def generate_title_task_description(self, product: shopify.Product, input_data: UpdateProductInput) -> str:
+    def generate_title_task_description(self, product: shopify.Product, input_data) -> str:
         context_details = [
             f"Existing Title: {product.title}" if product.title else None,
             f"Product Type: {input_data.product_type}" if input_data.product_type else None,
@@ -431,7 +431,7 @@ class UpdateProductTool(BaseTool):
 
         return task_description
 
-    def generate_description_task_description(self, product: shopify.Product, input_data: UpdateProductInput) -> str:
+    def generate_description_task_description(self, product: shopify.Product, input_data) -> str:
         context_details = [
             f"Existing Description: {self.html_to_plain_text(product.body_html)}" if product.body_html else None,
             f"Product Type: {input_data.product_type}" if input_data.product_type else None,
@@ -456,7 +456,7 @@ class UpdateProductTool(BaseTool):
 
         return task_description
 
-    def generate_product_type_task_description(self, product: shopify.Product, input_data: UpdateProductInput) -> str:
+    def generate_product_type_task_description(self, product: shopify.Product, input_data) -> str:
         context_details = [
             f"Existing Product Type: {product.product_type}" if product.product_type else None,
             f"Vendor: {input_data.vendor}" if input_data.vendor else None,
@@ -480,7 +480,7 @@ class UpdateProductTool(BaseTool):
 
         return task_description
 
-    def generate_tags_task_description(self, product: shopify.Product, input_data: UpdateProductInput) -> str:
+    def generate_tags_task_description(self, product: shopify.Product, input_data) -> str:
         context_details = [
             f"Existing Tags: {product.tags}" if product.tags else None,
             f"Product Type: {input_data.product_type}" if input_data.product_type else None,
@@ -504,28 +504,66 @@ class UpdateProductTool(BaseTool):
 
         return task_description
 
-    def _execute(self, input_data: UpdateProductInput) -> Optional[shopify.Product]:
+    def _execute(
+        self,
+        generate_title: bool,
+        generate_description: bool,
+        generate_product_type: bool,
+        generate_vendor: bool,
+        generate_tags: bool,
+        generate_price: bool,
+        product_id: str,
+        title: Optional[str] = None,
+        description: Optional[str] = None,
+        product_type: Optional[str] = None,
+        vendor: Optional[str] = None,
+        tags: Optional[str] = None,
+        price: Optional[str] = None,
+        context: Optional[str] = None
+    ) -> Optional[shopify.Product]:
         """Update a product on Shopify.
 
         Args:
-            input_data (UpdateProductInput): The input data containing the updated product information.
+            generate_title (bool): Whether to generate the title.
+            generate_description (bool): Whether to generate the description.
+            generate_product_type (bool): Whether to generate the product type.
+            generate_vendor (bool): Whether to generate the vendor.
+            generate_tags (bool): Whether to generate the tags.
+            generate_price (bool): Whether to generate the price.
             product_id (str): The ID of the product to update.
             title (Optional[str], optional): The new title of the product. Defaults to None.
             description (Optional[str], optional): The new description of the product. Defaults to None.
+            product_type (Optional[str], optional): The new product type. Defaults to None.
+            vendor (Optional[str], optional): The new vendor. Defaults to None.
             tags (Optional[str], optional): The new tags for the product. Defaults to None.
-            metafields (Optional[List[Dict[str, Union[str, int, float, bool]]]], optional): The new metafields for the product. Defaults to None.
-            print_details (bool, optional): Whether to print the updated product details. Defaults to False.
+            price (Optional[str], optional): The new price. Defaults to None.
+            context (Optional[str], optional): Optional context for the product. Defaults to None.
 
         Returns:
             Optional[shopify.Product]: The updated product if successful, or None if there was an error.
         """
-
-        product_id = input_data.product_id
         product = shopify.Product.find(product_id)
 
         if not product:
             print(f"Product {product_id} not found.")
             return None
+
+        input_data = (
+            generate_title,
+            generate_description,
+            generate_product_type,
+            generate_vendor,
+            generate_tags,
+            generate_price,
+            product_id,
+            title,
+            description,
+            product_type,
+            vendor,
+            tags,
+            price,
+            context
+        )
 
         if product:
             # Handle each product input value based on the boolean flags
