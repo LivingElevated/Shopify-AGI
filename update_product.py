@@ -206,7 +206,7 @@ class UpdateProductTool(BaseTool):
         logger.info(generated_info)
         return generated_info
     
-    def _generate_value_based_on_flag(self, generate_flag: bool, old_value: Any, new_value: Optional[Any], task_description: str = None) -> Any:
+    def _generate_value_based_on_flag(self, generate_flag: bool, old_value: str, new_value: Optional[str], task_description: str = None) -> Any:
         if generate_flag:
             if task_description:
                 # Generate new value based on task description, old value, and possibly new value
@@ -407,7 +407,7 @@ class UpdateProductTool(BaseTool):
         text = '\n'.join(p.get_text() for p in soup.find_all('p'))
         return text
     
-    def generate_title_task_description(self, product: shopify.Product, input_data) -> str:
+    def generate_title_task_description(self, product, input_data) -> str:
         context_details = [
             f"Existing Title: {product.title}" if product.title else None,
             f"Product Type: {input_data.product_type}" if input_data.product_type else None,
@@ -431,7 +431,7 @@ class UpdateProductTool(BaseTool):
 
         return task_description
 
-    def generate_description_task_description(self, product: shopify.Product, input_data) -> str:
+    def generate_description_task_description(self, product, input_data) -> str:
         context_details = [
             f"Existing Description: {self.html_to_plain_text(product.body_html)}" if product.body_html else None,
             f"Product Type: {input_data.product_type}" if input_data.product_type else None,
@@ -456,7 +456,7 @@ class UpdateProductTool(BaseTool):
 
         return task_description
 
-    def generate_product_type_task_description(self, product: shopify.Product, input_data) -> str:
+    def generate_product_type_task_description(self, product, input_data) -> str:
         context_details = [
             f"Existing Product Type: {product.product_type}" if product.product_type else None,
             f"Vendor: {input_data.vendor}" if input_data.vendor else None,
@@ -480,7 +480,7 @@ class UpdateProductTool(BaseTool):
 
         return task_description
 
-    def generate_tags_task_description(self, product: shopify.Product, input_data) -> str:
+    def generate_tags_task_description(self, product, input_data) -> str:
         context_details = [
             f"Existing Tags: {product.tags}" if product.tags else None,
             f"Product Type: {input_data.product_type}" if input_data.product_type else None,
