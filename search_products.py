@@ -47,7 +47,7 @@ class SearchProductsTool(BaseTool):
         arbitrary_types_allowed = True
 
 
-    def _execute(self, inputs: Dict[str, str]) -> List[Tuple[int, str]]:
+    def _execute(self, inputs: Dict[str, Any]) -> List[Tuple[int, str]]:
         """
         Execute the search products tool.
 
