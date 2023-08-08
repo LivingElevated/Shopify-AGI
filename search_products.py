@@ -16,10 +16,11 @@ from superagi.tools.tool_response_query_manager import ToolResponseQueryManager
 from shopify_llm import LLMInput, ShopifyLLM
 from shopify_config import ShopifyConfig
 
+
 class SearchProductsInput(BaseModel):
     title: Optional[str] = Field(
         ...,
-        description = "Title of the products to search for."
+        description="Title of the products to search for."
     )
     product_type: Optional[str] = Field(
         None,
@@ -46,25 +47,18 @@ class SearchProductsTool(BaseTool):
     class Config:
         arbitrary_types_allowed = True
 
-
-    def _execute(self, inputs: Dict[str, Any]) -> List[Tuple[int, str]]:
+    def _execute(self, title: Optional[str] = None, product_type: Optional[str] = None, vendor: Optional[str] = None) -> List[Tuple[int, str]]:
         """
         Execute the search products tool.
 
         Args:
-            inputs (Dict[str, str]): Dictionary of inputs with keys 'title', 'product_type', and 'vendor'.
             title (str, optional): Title of the products to search for.
             product_type (str, optional): Product type to filter the search.
             vendor (str, optional): Vendor to filter the search.
 
-
         Returns:
             List[Tuple[int, str]]: List of products that match the search criteria.
         """
-        title = inputs.get('title')
-        product_type = inputs.get('product_type')
-        vendor = inputs.get('vendor')
-
         lowercase_title = title.lower() if title else None
         lowercase_product_type = product_type.lower() if product_type else None
         lowercase_vendor = vendor.lower() if vendor else None
