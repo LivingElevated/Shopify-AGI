@@ -60,7 +60,7 @@ class DeleteProductTool(BaseTool):
             product_details_str = self._generate_product_details(product)
             self._log_product_details(product_details_str)
             product.destroy()
-            file_name = f"Product ID: {product_id}"
+            file_name = f"Product ID {product_id}.xlsx"
             # Write product details to a file
             self.resource_manager.write_file(file_name, product_details_str)
 
