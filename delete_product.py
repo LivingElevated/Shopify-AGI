@@ -34,7 +34,7 @@ class DeleteProductTool(BaseTool):
         description : The description of the tool.
         args_schema : The args schema.
     """
-    name: str = "Delete Product Tool"
+    name: str = "Delete Product"
     description: str = "Delete a single product from your Shopify store. (Must be called by the product ID)"
     args_schema: Type[BaseModel] = DeleteProductInput
     resource_manager: Optional[FileManager] = None
