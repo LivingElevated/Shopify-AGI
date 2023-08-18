@@ -30,6 +30,10 @@ class SearchProductsInput(BaseModel):
         None,
         description="Vendor to filter the search."
     )
+    tags: Optional[str] = Field(
+        None,
+        description="Vendor to filter the search."
+    )
 
 
 class SearchProductsTool(BaseTool):
@@ -47,7 +51,7 @@ class SearchProductsTool(BaseTool):
     class Config:
         arbitrary_types_allowed = True
 
-    def _execute(self, title: Optional[str] = None, product_type: Optional[str] = None, vendor: Optional[str] = None) -> List[Tuple[int, str]]:
+    def _execute(self, title: Optional[str] = None, product_type: Optional[str] = None, vendor: Optional[str] = None, tags: Optional[str] = None) -> List[Tuple[int, str]]:
         """
         Execute the search products tool.
 
@@ -60,7 +64,7 @@ class SearchProductsTool(BaseTool):
             List[Tuple[int, str]]: List of products that match the search criteria.
         """
         # Validate input parameters
-        if title is None and product_type is None and vendor is None:
+        if title is None and product_type is None and vendor is None and tags is None:
             print(
                 "At least one search parameter (title, product_type, or vendor) must be provided.")
             raise ValueError(
@@ -69,6 +73,8 @@ class SearchProductsTool(BaseTool):
         lowercase_title = title.lower() if title else None
         lowercase_product_type = product_type.lower() if product_type else None
         lowercase_vendor = vendor.lower() if vendor else None
+        lowercase_tags = [tag.strip() for tag in tags.split(
+            ",")] if tags else None  # Convert tags to a list
         matching_products = []
 
         output = ['Product ID', 'Title', 'Price']
@@ -80,9 +86,14 @@ class SearchProductsTool(BaseTool):
 
         # Filter the products based on the search criteria
         for product in products:
-            if (not lowercase_title or lowercase_title in product.title.lower()) and \
-                (not lowercase_product_type or lowercase_product_type in product.product_type.lower()) and \
-                    (not lowercase_vendor or lowercase_vendor in product.vendor.lower()):
+            if (
+                (not lowercase_title or lowercase_title in product.title.lower()) and
+                (not lowercase_product_type or lowercase_product_type in product.product_type.lower()) and
+                (not lowercase_vendor or lowercase_vendor in product.vendor.lower()) and
+                # Check if all tags are present
+                (not lowercase_tags or all(
+                    tag in product.tags for tag in lowercase_tags))
+                     ):
                 matching_products.append(product)
 
         pretty_product_info = self._pretty_product_info(
