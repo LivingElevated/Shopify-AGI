@@ -19,7 +19,7 @@ from shopify_config import ShopifyConfig
 
 class SearchProductsInput(BaseModel):
     title: Optional[str] = Field(
-        ...,
+        None,
         description="Title of the products to search for."
     )
     product_type: Optional[str] = Field(
