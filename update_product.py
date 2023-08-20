@@ -568,6 +568,8 @@ class UpdateProductTool(BaseTool):
             print(f"Product {product_id} not found.")
             return None
         
+        # Define option_values to hold the new option values (if provided)
+        option_values = None  # Initialize with None
         # Retrieve existing options and their values
         existing_options = product.options
         existing_option_values = {
