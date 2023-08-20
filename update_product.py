@@ -567,6 +567,13 @@ class UpdateProductTool(BaseTool):
         if not product:
             print(f"Product {product_id} not found.")
             return None
+        
+        # Retrieve existing options and their values
+        existing_options = product.options
+        existing_option_values = {
+            option.name: [value.value for value in option.values]
+            for option in existing_options
+        }
 
         if product:
             old_product_details = self._generate_product_details(
@@ -665,6 +672,18 @@ class UpdateProductTool(BaseTool):
             if vendor is not None:
                 product.vendor = self.validate_field(
                     vendor, 255, "Vendor", required=False)
+                
+            # Update product options and values
+            for option_name, option_values in existing_option_values.items():
+                # Find the option object by name
+                option = next(
+                    (opt for opt in product.options if opt.name == option_name), None)
+                if option:
+                    # Update option values if provided
+                    if option_values:
+                        option.values = [{'value': value}
+                                        for value in option_values]
+
         except ValueError as e:
             try:
                 field_name, value_and_error_message = str(e).split("::", 2)
