@@ -672,18 +672,18 @@ class UpdateProductTool(BaseTool):
             if vendor is not None:
                 product.vendor = self.validate_field(
                     vendor, 255, "Vendor", required=False)
-                
-            # Update product options and values
-            for option_name, option_values in existing_option_values.items():
-                # Find the option object by name
-                option = next(
-                    (opt for opt in product.options if opt.name == option_name), None)
-                if option:
-                    # Update option values if provided
-                    if option_values:
-                        option.values = [{'value': value}
-                                        for value in option_values]
-
+            # Update options and values only if option_values are provided
+            if option_values is not None:
+                    # Update product options and values
+                    for option_name, option_values in existing_option_values.items():
+                        # Find the option object by name
+                        option = next(
+                            (opt for opt in product.options if opt.name == option_name), None)
+                        if option:
+                            # Update option values if provided
+                            if option_values:
+                                option.values = [{'value': value}
+                                                for value in option_values]
             # Print the data you're sending to the API just before making the request
             print("Data to be sent:", existing_option_values)
 
