@@ -515,20 +515,20 @@ class UpdateProductTool(BaseTool):
 
     def _execute(
         self,
-        generate_title: bool,
-        generate_description: bool,
-        generate_product_type: bool,
-        generate_vendor: bool,
-        generate_tags: bool,
-        generate_price: bool,
         product_id: str,
-        title: Optional[str] = None,
-        description: Optional[str] = None,
-        product_type: Optional[str] = None,
-        vendor: Optional[str] = None,
-        tags: Optional[str] = None,
-        price: Optional[str] = None,
-        context: Optional[str] = None
+        generate_price: bool=False,
+        generate_title: bool=False,
+        generate_description: bool=False,
+        generate_product_type: bool=False,
+        generate_vendor: bool=False,
+        generate_tags: bool=False,
+        title: Optional[str]=None,
+        description: Optional[str]=None,
+        product_type: Optional[str]=None,
+        vendor: Optional[str]=None,
+        tags: Optional[str]=None,
+        price: Optional[str]=None,
+        context: Optional[str]=None
     ) -> Optional[shopify.Product]:
         """Update a product on Shopify.
 
