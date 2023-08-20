@@ -669,8 +669,13 @@ class UpdateProductTool(BaseTool):
             if tags is not None:
                 product.tags = self.validate_field(tags, 255, "Tags")
             if price is not None:
-                product.variants = [shopify.Variant({'price': self.validate_field(
-                    price, 255, "Price", field_type="price", required=False)})]
+                # Update the price for each variant
+                for variant in product.variants:
+                    variant.price = self.validate_field(
+                        price, 255, "Price", field_type="price", required=False)
+           # if price is not None:
+           #     product.variants = [shopify.Variant({'price': self.validate_field(
+           #         price, 255, "Price", field_type="price", required=False)})]
             if vendor is not None:
                 product.vendor = self.validate_field(
                     vendor, 255, "Vendor", required=False)
