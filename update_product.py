@@ -571,7 +571,7 @@ class UpdateProductTool(BaseTool):
         # Retrieve existing options and their values
         existing_options = product.options
         existing_option_values = {
-            option.name: [value.value for value in option.values]
+            option.name: option.values  # Assuming option.values is a list of strings
             for option in existing_options
         }
 
