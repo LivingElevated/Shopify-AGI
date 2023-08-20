@@ -650,18 +650,18 @@ class UpdateProductTool(BaseTool):
         try:
             if description is not None:
                 product.body_html = self.validate_field(
-                    description, 65535, "Description", field_type="html", required=True)
+                    description, 65535, "Description", field_type="html", required=False)
             if product_type is not None:
                 product.product_type = self.validate_field(
-                    product_type, 255, "Product type", required=True)
+                    product_type, 255, "Product type", required=False)
             if tags is not None:
                 product.tags = self.validate_field(tags, 255, "Tags")
             if price is not None:
                 product.variants = [shopify.Variant({'price': self.validate_field(
-                    price, 255, "Price", field_type="price", required=True)})]
+                    price, 255, "Price", field_type="price", required=False)})]
             if vendor is not None:
                 product.vendor = self.validate_field(
-                    vendor, 255, "Vendor", required=True)
+                    vendor, 255, "Vendor", required=False)
         except ValueError as e:
             try:
                 field_name, value_and_error_message = str(e).split("::", 2)
