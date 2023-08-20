@@ -219,7 +219,7 @@ class UpdateProductTool(BaseTool):
         else:
             return new_value if new_value is not None else old_value
 
-    def _generate_price_based_on_flag(self, generate_flag: bool, old_value: str, new_value: str, title, description, product_type, tags) -> Tuple[str, Optional[str]]:
+    def _generate_price_based_on_flag(self, generate_flag: bool, old_value: str, new_value: str, product, title, description, product_type, tags) -> Tuple[str, Optional[str]]:
         if generate_flag:
             if new_value:
                 return new_value, None
@@ -232,7 +232,7 @@ class UpdateProductTool(BaseTool):
         else:
             return old_value, None
 
-    def _generate_vendor_based_on_flag(self, generate_flag: bool, old_value: str, new_value: str, title, description, product_type, tags, price) -> Tuple[str, Optional[str]]:
+    def _generate_vendor_based_on_flag(self, generate_flag: bool, old_value: str, new_value: str, product, title, description, product_type, tags, price) -> Tuple[str, Optional[str]]:
         if generate_flag:
             if new_value:
                 return new_value, None
@@ -628,13 +628,13 @@ class UpdateProductTool(BaseTool):
             generate_price,  # Generate flag
             product.variants[0].price if product.variants else None,  # Old value
             price,  # New value
-            title, description, product_type, tags   # Additional arguments
+            product, title, description, product_type, tags   # Additional arguments
         )
         vendor, vendor_metadata = self._generate_vendor_based_on_flag(
             generate_vendor,    # Generate flag
             product.vendor,  # Old value
             vendor,  # New value
-            title, description, product_type, tags, price  # Additional arguments
+            product, title, description, product_type, tags, price  # Additional arguments
             )
 
         try:
