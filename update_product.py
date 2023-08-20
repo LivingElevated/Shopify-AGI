@@ -558,6 +558,12 @@ class UpdateProductTool(BaseTool):
         shop = self._init_shopify()
         product = shopify.Product.find(product_id)
 
+        # Initialize metadata
+        vendor_metadata = None
+        tags_metadata = None
+        price_metadata = None
+        type_metadata = None
+
         if not product:
             print(f"Product {product_id} not found.")
             return None
@@ -570,82 +576,79 @@ class UpdateProductTool(BaseTool):
             # Write backup of old product details to a file
             self.resource_manager.write_file(file_name, old_product_details)
 
+            if title or generate_title:
+                # Handle each product input value based on the boolean flags
+                title = self._generate_value_based_on_flag(
+                    generate_title, product.title, title,
+                    self.generate_title_task_description(
+                        product, title, product_type, vendor)
+                )
+                # List of small words to be in lowercase (customize it according to your needs)
+                small_words = ['a', 'an', 'and', 'as', 'at', 'but', 'by', 'for',
+                            'if', 'in', 'nor', 'of', 'on', 'or', 'so', 'the', 'to', 'up', 'yet']
 
-            # Handle each product input value based on the boolean flags
-            title = self._generate_value_based_on_flag(
-                generate_title, product.title, title,
-                self.generate_title_task_description(
-                    product, title, product_type, vendor)
-            )
+                # Capitalize every word in the title
+                title = title.title()
 
-            description = self._generate_value_based_on_flag(
-                generate_description, self.html_to_plain_text(
-                    product.body_html), description,
-                self.generate_description_task_description(
-                    product, title, description, product_type, vendor, tags, price)
-            )
+                # Lowercase small words (but not the first or the last word of the title)
+                title_words = title.split()
+                for i in range(1, len(title_words) - 1):  # skip the first and the last word
+                    if title_words[i].lower() in small_words:
+                        title_words[i] = title_words[i].lower()
+                title = ' '.join(title_words)
 
-            product_type = self._generate_value_based_on_flag(
-                generate_product_type, product.product_type, product_type,
-                self.generate_product_type_task_description(
-                    product, title, description, product_type, vendor, tags, price)
-            )
+                product.title = title
 
-            tags = self._generate_value_based_on_flag(
-                generate_tags, product.tags, tags,
-                self.generate_tags_task_description(
-                    product, title, description, product_type, vendor, tags, price)
-            )
+            if description or generate_description:
+                description = self._generate_value_based_on_flag(
+                    generate_description, self.html_to_plain_text(
+                        product.body_html), description,
+                    self.generate_description_task_description(
+                        product, title, description, product_type, vendor, tags, price)
+                )
 
-        # List of small words to be in lowercase (customize it according to your needs)
-        small_words = ['a', 'an', 'and', 'as', 'at', 'but', 'by', 'for',
-                    'if', 'in', 'nor', 'of', 'on', 'or', 'so', 'the', 'to', 'up', 'yet']
+                description = "\n".join(
+                    [line for line in description.split('\n') if line.strip()])
+                # Convert to HTML by adding <p> tags for each paragraph
+                description = '<p>' + description.replace('\n', '</p><p>') + '</p>'
+                # Remove empty paragraphs
+                description = re.sub(r'(</p><p>)+', '</p><p>', description)
 
-        # Capitalize every word in the title
-        title = title.title()
+            if product_type or generate_product_type:
+                product_type = self._generate_value_based_on_flag(
+                    generate_product_type, product.product_type, product_type,
+                    self.generate_product_type_task_description(
+                        product, title, description, product_type, vendor, tags, price)
+                )
 
-        # Lowercase small words (but not the first or the last word of the title)
-        title_words = title.split()
-        for i in range(1, len(title_words) - 1):  # skip the first and the last word
-            if title_words[i].lower() in small_words:
-                title_words[i] = title_words[i].lower()
-        title = ' '.join(title_words)
+                max_length = 255
+                if len(product_type) > max_length:  # Replace with the actual maximum length
+                    product_type, type_metadata = self.trim_product_type(
+                        product_type, max_length)
 
-        product.title = title
+            if tags or generate_tags:
+                tags = self._generate_value_based_on_flag(
+                    generate_tags, product.tags, tags,
+                    self.generate_tags_task_description(
+                        product, title, description, product_type, vendor, tags, price)
+                )
+                tags, tags_metadata = self.trim_tags(tags, 255)
 
-        vendor_metadata = None
-        tags_metadata = None
-        price_metadata = None
-        type_metadata = None
+            if price or generate_price:
+                price, price_metadata = self._generate_price_based_on_flag(
+                    generate_price,  # Generate flag
+                    product.variants[0].price if product.variants else None,  # Old value
+                    price,  # New value
+                    product, title, description, product_type, tags   # Additional arguments
+                )
 
-        if description:
-            description = "\n".join(
-                [line for line in description.split('\n') if line.strip()])
-            # Convert to HTML by adding <p> tags for each paragraph
-            description = '<p>' + description.replace('\n', '</p><p>') + '</p>'
-            description = re.sub(r'(</p><p>)+', '</p><p>', description)  # Remove empty paragraphs
-
-        if product_type:
-            max_length = 255
-            if len(product_type) > max_length:  # Replace with the actual maximum length
-                product_type, type_metadata = self.trim_product_type(
-                    product_type, max_length)
-                
-        if tags:
-            tags, tags_metadata = self.trim_tags(tags, 255)
-
-        price, price_metadata = self._generate_price_based_on_flag(
-            generate_price,  # Generate flag
-            product.variants[0].price if product.variants else None,  # Old value
-            price,  # New value
-            product, title, description, product_type, tags   # Additional arguments
-        )
-        vendor, vendor_metadata = self._generate_vendor_based_on_flag(
-            generate_vendor,    # Generate flag
-            product.vendor,  # Old value
-            vendor,  # New value
-            product, title, description, product_type, tags, price  # Additional arguments
-            )
+            if vendor or generate_vendor:
+                vendor, vendor_metadata = self._generate_vendor_based_on_flag(
+                    generate_vendor,    # Generate flag
+                    product.vendor,  # Old value
+                    vendor,  # New value
+                    product, title, description, product_type, tags, price  # Additional arguments
+                    )
 
         try:
             if description is not None:
