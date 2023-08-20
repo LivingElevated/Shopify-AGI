@@ -1,5 +1,6 @@
 import shopify
 import re
+from textwrap import dedent
 from typing import Type, Union, Dict, Any, List, Optional, Tuple
 
 from bs4 import BeautifulSoup
@@ -561,6 +562,14 @@ class UpdateProductTool(BaseTool):
             return None
 
         if product:
+            old_product_details = self._generate_product_details(
+                            product)
+            self._log_product_details(old_product_details)
+            file_name = f"Product ID {product_id}.csv"
+            # Write backup of old product details to a file
+            self.resource_manager.write_file(file_name, old_product_details)
+
+
             # Handle each product input value based on the boolean flags
             title = self._generate_value_based_on_flag(
                 generate_title, product.title, title,
@@ -750,4 +759,13 @@ class UpdateProductTool(BaseTool):
 
         logger.info(product_details_str)
 
-        return product_details_str
+        update_message = dedent(f"""
+                                    Successfully Updated Product ID: {product.id}
+                                    Backup written to file: "{file_name}" in the current resource manager output directory.
+
+                                    Updated Product Details:
+                                    {product_details_str}
+                                    
+                                    """)
+
+        return update_message
