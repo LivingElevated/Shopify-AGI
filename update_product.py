@@ -769,3 +769,55 @@ class UpdateProductTool(BaseTool):
                                     """)
 
         return update_message
+
+    def _generate_product_details(self, product):
+            # Convert the product object to a dictionary
+        product_data = product.to_dict()
+
+        # Compute the new lines outside of f-string
+        metafields_values = ',\n'.join(
+            [metafield.value for metafield in product.metafields()])
+        # Get all collections that contain the product
+        collections = shopify.CustomCollection.find(product_id=product.id)
+        collections.extend(shopify.SmartCollection.find(product_id=product.id))
+        collections_names = ', '.join(
+            [collection.title for collection in collections])
+
+        # Generate a pretty formatted output
+        product_details = dedent(f"""
+            Title: {product.title}
+
+            Description:
+            {self.html_to_plain_text(product.body_html)}
+
+            Product Type: {product.product_type}
+
+            Vendor: {product.vendor}
+
+            Collections: {collections_names}
+
+            Tags: {product.tags}
+
+            Price: {product.variants[0].price if product.variants else None}
+
+            Product ID: {product.id}
+
+            Product Metafields: {', '.join([str(metafield) for metafield in product.metafields()])}
+
+            Metafields Values: {metafields_values}
+
+            Images: {json.dumps(product_data["images"], indent=2)}
+
+            Variants: {json.dumps(product_data["variants"], indent=2)}
+
+            Options: {json.dumps(product_data["options"], indent=2)}
+
+            Published At: {product.published_at}
+
+            Created At: {product.created_at}
+
+            Updated At: {product.updated_at}
+
+        """)
+
+        return product_details
