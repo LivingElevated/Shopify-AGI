@@ -822,3 +822,6 @@ class UpdateProductTool(BaseTool):
         """)
 
         return product_details
+    
+    def _log_product_details(self, product_details):
+        logger.info(product_details)
