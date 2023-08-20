@@ -73,8 +73,13 @@ class SearchProductsTool(BaseTool):
         lowercase_title = title.lower() if title else None
         lowercase_product_type = product_type.lower() if product_type else None
         lowercase_vendor = vendor.lower() if vendor else None
-        lowercase_tags = [tag.strip() for tag in tags.split(
-            ",")] if tags else None  # Convert tags to a list
+
+        # Convert tags to a list
+        if tags:
+            lowercase_tags = [tag.strip() for tag in tags.split(",")]
+        else:
+            lowercase_tags = None
+
         matching_products = []
 
         output = ['Product ID', 'Title', 'Price']
@@ -92,7 +97,7 @@ class SearchProductsTool(BaseTool):
                 (not lowercase_vendor or lowercase_vendor in product.vendor.lower()) and
                 # Check if all tags are present
                 (not lowercase_tags or all(
-                    tag in product.tags for tag in lowercase_tags))
+                    tag in product.tags.lower() for tag in lowercase_tags))
                      ):
                 matching_products.append(product)
 
