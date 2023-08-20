@@ -684,6 +684,9 @@ class UpdateProductTool(BaseTool):
                         option.values = [{'value': value}
                                         for value in option_values]
 
+            # Print the data you're sending to the API just before making the request
+            print("Data to be sent:", existing_option_values)
+
         except ValueError as e:
             try:
                 field_name, value_and_error_message = str(e).split("::", 2)
