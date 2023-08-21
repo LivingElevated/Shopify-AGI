@@ -669,6 +669,9 @@ class UpdateProductTool(BaseTool):
             if tags is not None and tags.strip():
                 product.tags = self.validate_field(tags, 255, "Tags")
             if price is not None and price.strip():
+                # Remove any non-numeric characters from the price
+                price = re.sub(r'[^\d.]', '', price)
+
                 # Update the price for each variant
                 for variant in product.variants:
                     variant.price = self.validate_field(
