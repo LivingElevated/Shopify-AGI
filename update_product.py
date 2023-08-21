@@ -606,6 +606,11 @@ class UpdateProductTool(BaseTool):
             self.resource_manager.write_file(file_name, old_product_details)
 
             if title or generate_title:
+                print("Updating title...")
+                ...
+                print("Existing Title:", product.title)
+                print("New Title:", title)
+
                 # Handle each product input value based on the boolean flags
                 title = self._generate_value_based_on_flag(
                     generate_title, product.title, title,
@@ -627,8 +632,14 @@ class UpdateProductTool(BaseTool):
                 title = ' '.join(title_words)
 
                 product.title = title
+                print("Updated Title:", product.title)
 
             if description or generate_description:
+                print("Updating description...")
+                ...
+                print("Existing Description:", product.body_html)
+                print("New Description:", description)
+
                 description = self._generate_value_based_on_flag(
                     generate_description, self.html_to_plain_text(
                         product.body_html), description,
@@ -642,8 +653,14 @@ class UpdateProductTool(BaseTool):
                 description = '<p>' + description.replace('\n', '</p><p>') + '</p>'
                 # Remove empty paragraphs
                 description = re.sub(r'(</p><p>)+', '</p><p>', description)
+                print("Updated Description:", description)
 
             if product_type or generate_product_type:
+                print("Updating product type...")
+                ...
+                print("Existing Product Type:", product.product_type)
+                print("New Product Type:", product_type)
+
                 product_type = self._generate_value_based_on_flag(
                     generate_product_type, product.product_type, product_type,
                     self.generate_product_type_task_description(
@@ -654,41 +671,64 @@ class UpdateProductTool(BaseTool):
                 if len(product_type) > max_length:  # Replace with the actual maximum length
                     product_type, type_metadata = self.trim_product_type(
                         product_type, max_length)
+                print("Trimmed Product Type:", product_type)
 
             if tags or generate_tags:
+                print("Updating tags...")
+                ...
+                print("Existing Tags:", product.tags)
+                print("New Tags:", tags)
+
                 tags = self._generate_value_based_on_flag(
                     generate_tags, product.tags, tags,
                     self.generate_tags_task_description(
                         product, title, description, product_type, vendor, tags, price)
                 )
                 tags, tags_metadata = self.trim_tags(tags, 255)
+                print("Trimmed Tags:", tags)
 
             if price or generate_price:
+                print("Updating price...")
+                ...
+                print("Existing Price:", product.variants[0].price if product.variants else None)
+                print("New Price:", price)
+
                 price, price_metadata = self._generate_price_based_on_flag(
                     generate_price,  # Generate flag
                     product.variants[0].price if product.variants else None,  # Old value
                     price,  # New value
                     product, title, description, product_type, tags   # Additional arguments
                 )
+                print("Updated Price:", price)
 
             if vendor or generate_vendor:
+                print("Updating vendor...")
+                ...
+                print("Existing Vendor:", product.vendor)
+                print("New Vendor:", vendor)
+
                 vendor, vendor_metadata = self._generate_vendor_based_on_flag(
                     generate_vendor,    # Generate flag
                     product.vendor,  # Old value
                     vendor,  # New value
                     product, title, description, product_type, tags, price  # Additional arguments
                     )
+                print("Updated Vendor:", vendor)
 
         try:
             if description:
+                print("Saving description...")
                 product.body_html = self.validate_field(
                     description, 65535, "Description", field_type="html", required=True)
             if product_type:
+                print("Saving product type...")
                 product.product_type = self.validate_field(
                     product_type, 255, "Product type", required=True)
             if tags:
+                print("Saving tags...")
                 product.tags = self.validate_field(tags, 255, "Tags")
             if price:
+                print("Saving price...")
                 # Remove any non-numeric characters from the price
                 price = re.sub(r'[^\d.]', '', price)
 
@@ -697,6 +737,7 @@ class UpdateProductTool(BaseTool):
                     variant.price = self.validate_field(
                         price, 255, "Price", field_type="price", required=True)
             if vendor:
+                print("Saving vendor...")
                 product.vendor = self.validate_field(
                     vendor, 255, "Vendor", required=True)
             # Update options and values only if option_values are provided
@@ -729,6 +770,7 @@ class UpdateProductTool(BaseTool):
         # Try to save the product, and handle any exceptions that might occur.
         try:
             success = product.save()
+            print("Product saved:", success)
 
             if not success:
                 error_messages = product.errors.full_messages()
@@ -769,18 +811,6 @@ class UpdateProductTool(BaseTool):
                     for message in product.errors.full_messages():
                         logger.error("  " + message)
 
-            product_details = {
-                "title": product.title,
-                "description": product.body_html,
-                "product_type": product.product_type,
-                "vendor": product.vendor,
-                "tags": product.tags,
-                "price": product.variants[0].price if product.variants else None,
-                "product_id": product.id,
-                "product_metafields": product.metafields(),
-                "metafields_values": [metafield.value for metafield in product.metafields()],
-                "ai_metadata": ai_metadata
-            }
 
             # Compute the new lines outside of f-string
             metafields_values = ',\n'.join(
