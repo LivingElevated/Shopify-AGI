@@ -435,6 +435,11 @@ class UpdateProductTool(BaseTool):
         return text
     
     def generate_title_task_description(self, product, title, product_type, vendor) -> str:
+        if not product_type and product:
+            product_type = product.product_type
+        if not vendor and product:
+            vendor = product.vendor
+
         context_details = [
             f"Existing Title: {product.title}" if product.title else None,
             f"Product Type: {product_type}" if product_type else None,
@@ -459,6 +464,17 @@ class UpdateProductTool(BaseTool):
         return task_description
 
     def generate_description_task_description(self, product, title, description, product_type, vendor, tags, price) -> str:
+        if not title and product:
+            title = product.title
+        if not product_type and product:
+            product_type = product.product_type
+        if not vendor and product:
+            vendor = product.vendor
+        if not tags and product:
+            tags = product.tags
+        if not price and product:
+            price = product.price
+
         context_details = [
             f"Title: {title}" if title else None,
             f"Existing Description: {self.html_to_plain_text(product.body_html)}" if product.body_html else None,
@@ -485,6 +501,17 @@ class UpdateProductTool(BaseTool):
         return task_description
 
     def generate_product_type_task_description(self, product, title, description, product_type, vendor, tags, price) -> str:
+        if not title and product:
+            title = product.title
+        if not description and product:
+            description = product.body_html
+        if not vendor and product:
+            vendor = product.vendor
+        if not tags and product:
+            tags = product.tags
+        if not price and product:
+            price = product.price
+
         context_details = [
             f"Title: {title}" if title else None,
             f"Description: {description}" if description else None,
@@ -511,6 +538,17 @@ class UpdateProductTool(BaseTool):
         return task_description
 
     def generate_tags_task_description(self, product, title, description, product_type, vendor, tags, price) -> str:
+        if not title and product:
+            title = product.title
+        if not description and product:
+            description = product.body_html
+        if not product_type and product:
+            product_type = product.product_type
+        if not vendor and product:
+            vendor = product.vendor
+        if not price and product:
+            price = product.price
+
         context_details = [
             f"Title: {title}" if title else None,
             f"Description: {description}" if description else None,
