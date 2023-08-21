@@ -227,7 +227,7 @@ class UpdateProductTool(BaseTool):
                 return new_value, None
             else:
                 price, price_metadata = self._generate_specific_price(
-                    title, description, product_type, tags)
+                    title, description, product_type, tags, product)
                 return price, price_metadata
         elif new_value:
             return new_value, None
@@ -240,7 +240,7 @@ class UpdateProductTool(BaseTool):
                 return new_value, None
             else:
                 vendor, vendor_metadata = self._generate_specific_vendor(
-                    title, description, product_type, tags, price)
+                    title, description, product_type, tags, price, product)
                 return vendor, vendor_metadata
         elif new_value:
             return new_value, None
@@ -315,7 +315,7 @@ class UpdateProductTool(BaseTool):
 
         return tags, tags_metadata
 
-    def _generate_specific_price(self, title: str, description: Optional[str] = None, product_type: Optional[str] = None, tags: Optional[str] = None) -> Tuple[str, Optional[str]]:
+    def _generate_specific_price(self, title: str, description: Optional[str] = None, product_type: Optional[str] = None, tags: Optional[str] = None, product = None) -> Tuple[str, Optional[str]]:
         """
         Generate a specific price for a product.
 
@@ -328,6 +328,15 @@ class UpdateProductTool(BaseTool):
         Returns:
             Tuple[str, Optional[str]]: Tuple containing the generated price and metadata (only if there were multiple prices, the response was too long, had a space or contained more than 5 words).
         """
+        if not title and product:
+            title = product.title
+        if not description and product:
+            description = product.description
+        if not product_type and product:
+            product_type = product.product_type
+        if not tags and product:
+            tags = product.tags
+
         price_prompt = f"Suggest a suitable price for a product with title {title}, description {description}, type {product_type}, and tags {tags}."
         price = self.generate_info(price_prompt)
 
@@ -349,7 +358,7 @@ class UpdateProductTool(BaseTool):
 
         return price, price_metadata
     
-    def _generate_specific_vendor(self, title: str, description: Optional[str] = None, product_type: Optional[str] = None, tags: Optional[str] = None, price: Optional[str] = None) -> Tuple[str, Optional[str]]:
+    def _generate_specific_vendor(self, title: str, description: Optional[str] = None, product_type: Optional[str] = None, tags: Optional[str] = None, price: Optional[str] = None, product = None) -> Tuple[str, Optional[str]]:
         """
         Generate a specific vendor for a product based on title, description, product_type, price, and tags.
 
@@ -363,6 +372,17 @@ class UpdateProductTool(BaseTool):
         Returns:
             Tuple[str, Optional[str]]: A tuple containing the generated vendor and any vendor metadata (None if not applicable).
         """
+        if not title and product:
+            title = product.title
+        if not description and product:
+            description = product.description
+        if not product_type and product:
+            product_type = product.product_type
+        if not price and product:
+            price = product.price
+        if not tags and product:
+            tags = product.tags
+
         # Prepare the prompt string with available fields
         prompt_parts = {"title": title, "description": description,
                         "type": product_type, "price": price, "tags": tags}
