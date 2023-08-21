@@ -222,6 +222,11 @@ class UpdateProductTool(BaseTool):
             return new_value if new_value is not None else old_value
 
     def _generate_price_based_on_flag(self, generate_flag: bool, old_value: str, new_value: str, product, title, description, product_type, tags) -> Tuple[str, Optional[str]]:
+        print("Title:", title)
+        print("Description:", description)
+        print("Product Type:", product_type)
+        print("Tags:", tags)
+        
         if generate_flag:
             if new_value:
                 return new_value, None
@@ -315,7 +320,7 @@ class UpdateProductTool(BaseTool):
 
         return tags, tags_metadata
 
-    def _generate_specific_price(self, title: str, description: Optional[str] = None, product_type: Optional[str] = None, tags: Optional[str] = None, product = None) -> Tuple[str, Optional[str]]:
+    def _generate_specific_price(self, title, description, product_type, tags, product) -> Tuple[str, Optional[str]]:
         """
         Generate a specific price for a product.
 
@@ -358,7 +363,7 @@ class UpdateProductTool(BaseTool):
 
         return price, price_metadata
     
-    def _generate_specific_vendor(self, title: str, description: Optional[str] = None, product_type: Optional[str] = None, tags: Optional[str] = None, price: Optional[str] = None, product = None) -> Tuple[str, Optional[str]]:
+    def _generate_specific_vendor(self, title, description, product_type, tags, price, product) -> Tuple[str, Optional[str]]:
         """
         Generate a specific vendor for a product based on title, description, product_type, price, and tags.
 
