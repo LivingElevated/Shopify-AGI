@@ -585,7 +585,7 @@ class UpdateProductTool(BaseTool):
             # Write backup of old product details to a file
             self.resource_manager.write_file(file_name, old_product_details)
 
-            if (title is not None and title.strip()) or generate_title:
+            if title or generate_title:
                 # Handle each product input value based on the boolean flags
                 title = self._generate_value_based_on_flag(
                     generate_title, product.title, title,
@@ -608,7 +608,7 @@ class UpdateProductTool(BaseTool):
 
                 product.title = title
 
-            if (description is not None and description.strip()) or generate_description:
+            if description or generate_description:
                 description = self._generate_value_based_on_flag(
                     generate_description, self.html_to_plain_text(
                         product.body_html), description,
@@ -623,7 +623,7 @@ class UpdateProductTool(BaseTool):
                 # Remove empty paragraphs
                 description = re.sub(r'(</p><p>)+', '</p><p>', description)
 
-            if (product_type is not None and product_type.strip()) or generate_product_type:
+            if product_type or generate_product_type:
                 product_type = self._generate_value_based_on_flag(
                     generate_product_type, product.product_type, product_type,
                     self.generate_product_type_task_description(
@@ -635,7 +635,7 @@ class UpdateProductTool(BaseTool):
                     product_type, type_metadata = self.trim_product_type(
                         product_type, max_length)
 
-            if (tags is not None and tags.strip()) or generate_tags:
+            if tags or generate_tags:
                 tags = self._generate_value_based_on_flag(
                     generate_tags, product.tags, tags,
                     self.generate_tags_task_description(
@@ -643,7 +643,7 @@ class UpdateProductTool(BaseTool):
                 )
                 tags, tags_metadata = self.trim_tags(tags, 255)
 
-            if (price is not None and price.strip()) or generate_price:
+            if price or generate_price:
                 price, price_metadata = self._generate_price_based_on_flag(
                     generate_price,  # Generate flag
                     product.variants[0].price if product.variants else None,  # Old value
@@ -651,7 +651,7 @@ class UpdateProductTool(BaseTool):
                     product, title, description, product_type, tags   # Additional arguments
                 )
 
-            if (vendor is not None and vendor.strip()) or generate_vendor:
+            if vendor or generate_vendor:
                 vendor, vendor_metadata = self._generate_vendor_based_on_flag(
                     generate_vendor,    # Generate flag
                     product.vendor,  # Old value
@@ -660,15 +660,15 @@ class UpdateProductTool(BaseTool):
                     )
 
         try:
-            if description is not None and description.strip():
+            if description:
                 product.body_html = self.validate_field(
                     description, 65535, "Description", field_type="html", required=True)
-            if product_type is not None and product_type.strip():
+            if product_type:
                 product.product_type = self.validate_field(
                     product_type, 255, "Product type", required=True)
-            if tags is not None and tags.strip():
+            if tags:
                 product.tags = self.validate_field(tags, 255, "Tags")
-            if price is not None and price.strip():
+            if price:
                 # Remove any non-numeric characters from the price
                 price = re.sub(r'[^\d.]', '', price)
 
@@ -676,11 +676,11 @@ class UpdateProductTool(BaseTool):
                 for variant in product.variants:
                     variant.price = self.validate_field(
                         price, 255, "Price", field_type="price", required=True)
-            if vendor is not None and vendor.strip():
+            if vendor:
                 product.vendor = self.validate_field(
                     vendor, 255, "Vendor", required=True)
             # Update options and values only if option_values are provided
-            if option_values is not None and option_values.strip():
+            if option_values:
                     # Update product options and values
                     for option_name, option_values in existing_option_values.items():
                         # Find the option object by name
