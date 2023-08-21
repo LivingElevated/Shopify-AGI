@@ -226,13 +226,22 @@ class UpdateProductTool(BaseTool):
         print("Description:", description)
         print("Product Type:", product_type)
         print("Tags:", tags)
+
+        if not title and product:
+            title = product.title
+        if not description and product:
+            description = product.description
+        if not product_type and product:
+            product_type = product.product_type
+        if not tags and product:
+            tags = product.tags
         
         if generate_flag:
             if new_value:
                 return new_value, None
             else:
                 price, price_metadata = self._generate_specific_price(
-                    title, description, product_type, tags, product)
+                    title, description, product_type, tags)
                 return price, price_metadata
         elif new_value:
             return new_value, None
@@ -320,7 +329,7 @@ class UpdateProductTool(BaseTool):
 
         return tags, tags_metadata
 
-    def _generate_specific_price(self, title, description, product_type, tags, product) -> Tuple[str, Optional[str]]:
+    def _generate_specific_price(self, title, description, product_type, tags) -> Tuple[str, Optional[str]]:
         """
         Generate a specific price for a product.
 
@@ -333,14 +342,19 @@ class UpdateProductTool(BaseTool):
         Returns:
             Tuple[str, Optional[str]]: Tuple containing the generated price and metadata (only if there were multiple prices, the response was too long, had a space or contained more than 5 words).
         """
-        if not title and product:
-            title = product.title
-        if not description and product:
-            description = product.description
-        if not product_type and product:
-            product_type = product.product_type
-        if not tags and product:
-            tags = product.tags
+       # if not title and product:
+       #     title = product.title
+       # if not description and product:
+       #     description = product.description
+       # if not product_type and product:
+       #     product_type = product.product_type
+       # if not tags and product:
+       #     tags = product.tags
+
+        print("Title:", title)
+        print("Description:", description)
+        print("Product Type:", product_type)
+        print("Tags:", tags)
 
         price_prompt = f"Suggest a suitable price for a product with title {title}, description {description}, type {product_type}, and tags {tags}."
         price = self.generate_info(price_prompt)
