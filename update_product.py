@@ -230,7 +230,7 @@ class UpdateProductTool(BaseTool):
         if not title and product:
             title = product.title
         if not description and product:
-            description = product.description
+            description = product.body_html
         if not product_type and product:
             product_type = product.product_type
         if not tags and product:
@@ -399,7 +399,7 @@ class UpdateProductTool(BaseTool):
         if not title and product:
             title = product.title
         if not description and product:
-            description = product.description
+            description = product.body_html
         if not product_type and product:
             product_type = product.product_type
         if not price and product:
