@@ -235,6 +235,11 @@ class UpdateProductTool(BaseTool):
             product_type = product.product_type
         if not tags and product:
             tags = product.tags
+
+        print("Title:", title)
+        print("Description:", description)
+        print("Product Type:", product_type)
+        print("Tags:", tags)
         
         if generate_flag:
             if new_value:
