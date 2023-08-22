@@ -81,7 +81,7 @@ class UpdateProductInput(BaseModel):
 
 class UpdateProductTool(BaseTool):
     """
-    Create Product Tool is used to create new products on Shopify.
+    Update Product Tool is used to update  products on Shopify.
     Attributes:
         llm: Language Learning Model used for the tool.
         name : The name of the tool.
