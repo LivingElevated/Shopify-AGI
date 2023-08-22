@@ -13,6 +13,7 @@ from get_basic_product_data import GetProductTool
 from search_products import SearchProductsTool
 from update_product import UpdateProductTool
 from delete_product import DeleteProductTool
+from search_update import SearchandUpdateProductsTool
 
 
 
@@ -21,7 +22,7 @@ class ShopifyToolkit(BaseToolkit, ABC):
     description: str = "Shopify Tool kit contains all tools related to shopify tasks"
 
     def get_tools(self) -> List[BaseTool]:
-        return [ProductDataTool(), CreateProductTool(), GetAllProductsTool(), GetProductTool(), SearchProductsTool(), UpdateProductTool(), DeleteProductTool()]
+        return [ProductDataTool(), CreateProductTool(), GetAllProductsTool(), GetProductTool(), SearchProductsTool(),SearchandUpdateProductsTool(), UpdateProductTool(), DeleteProductTool()]
 
     def get_env_keys(self) -> List[str]:
         return ["SHOPIFY_API_KEY", "SHOPIFY_API_SECRET", "SHOPIFY_PASSWORD", "STORE_URL", "API_VERSION", "STORE_PROTOCOL"]
