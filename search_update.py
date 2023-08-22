@@ -7,66 +7,102 @@ from pydantic import BaseModel, Field, root_validator
 
 # Local application/library specific imports
 from superagi.tools.base_tool import BaseTool
-from superagi.tools.shopify.shopify_llm import LLMInput, ShopifyLLM
-from superagi.tools.shopify.shopify_config import ShopifyConfig
 from superagi.llms.base_llm import BaseLlm
 from superagi.resource_manager.file_manager import FileManager
 from superagi.lib.logger import logger
 from superagi.tools.tool_response_query_manager import ToolResponseQueryManager
 
-
-class GetAllSort(BaseModel):
-    sortby: Optional[str] = Field(
-        None, description="Sort method to use (use default if nothing is specified): default, alpha-asc, alpha-desc, price-asc, price-desc")
-    output: Optional[List[str]] = Field(
-        None, description="Output to be returned by tool. Default is Product ID, Title, Price.")
+# Local shopify specific imports
+from shopify_llm import LLMInput, ShopifyLLM
+from shopify_config import ShopifyConfig
 
 
-class GetAllProductsTool(BaseTool):
+class SearchProductsInput(BaseModel):
+    title: Optional[str] = Field(
+        None,
+        description="Title of the products to search for."
+    )
+    product_type: Optional[str] = Field(
+        None,
+        description="Product type to filter the search."
+    )
+    vendor: Optional[str] = Field(
+        None,
+        description="Vendor to filter the search."
+    )
+    tags: Optional[str] = Field(
+        None,
+        description="Vendor to filter the search."
+    )
+
+
+class SearchProductsTool(BaseTool):
     """
-    Get All Products Tool;          ;          
+    Search Products Tool
     Attributes:
         name : The name of the tool.
         description : The description of the tool.
         args_schema : The args schema.
     """
-    name = "Get All Products"
-    description = (
-        "Fetch all products from Shopify with specified details and sort order. "
-        "Default output is Product ID, Title, Price. Default sort order is by product ID. "
-        "Sort order options are: default, alpha-asc, alpha-desc, price-asc, price-desc. "
-        "alpha-asc: Alphabetically, in ascending order(A - Z). "
-        "alpha-desc: Alphabetically, in descending order(Z - A). "
-        "best-selling: By best-selling products. "
-        "created: By date created, in ascending order(oldest - newest). "
-        "created-desc: By date created, in descending order(newest - oldest). "
-        "manual: In the order set manually by the shop owner."
-        "price-asc: By price, in ascending order(lowest - highest)."
-        "price-desc: By price, in descending order(highest - lowest)."
-    )
-    args_schema: Type[BaseModel] = GetAllSort
+    name: str = "Search Products"
+    description: str = "Search products in Shopify based on various criteria"
+    args_schema: Type[BaseModel] = SearchProductsInput
 
     class Config:
         arbitrary_types_allowed = True
 
-    def _execute(self, sortby: str = None, output: List[str] = None):
+    def _execute(self, title: Optional[str] = None, product_type: Optional[str] = None, vendor: Optional[str] = None, tags: Optional[str] = None) -> List[Tuple[int, str]]:
         """
-        Execute the get all products tool.
-        Args:
-            sortby : The Shopify sort method to use.
-            output : The output fields to be returned by the tool.
-        Returns:
-            A string containing a pretty output of product details.
-        """
-        if output is None:
-            output = ['Product ID', 'Title', 'Price']
+        Execute the search products tool.
 
-        if sortby is None:
-            sortby = 'default'
+        Args:
+            title (str, optional): Title of the products to search for.
+            product_type (str, optional): Product type to filter the search.
+            vendor (str, optional): Vendor to filter the search.
+
+        Returns:
+            List[Tuple[int, str]]: List of products that match the search criteria.
+        """
+        # Validate input parameters
+        if title is None and product_type is None and vendor is None and tags is None:
+            print(
+                "At least one search parameter (title, product_type, or vendor) must be provided.")
+            raise ValueError(
+                "At least one search parameter (title, product_type, or vendor) must be provided.")
+
+        lowercase_title = title.lower() if title else None
+        lowercase_product_type = product_type.lower() if product_type else None
+        lowercase_vendor = vendor.lower() if vendor else None
+
+        # Convert tags to a list
+        if tags:
+            lowercase_tags = [tag.strip() for tag in tags.split(",")]
+        else:
+            lowercase_tags = None
+
+        matching_products = []
+
+        output = ['Product ID', 'Title', 'Price']
+
+        sortby = 'default'
 
         shop = self._init_shopify()
         products = self._get_all_products(shop, sortby)
-        pretty_product_info = self._pretty_product_info(products, output, sortby)
+
+        # Filter the products based on the search criteria
+        for product in products:
+            if (
+                (not lowercase_title or lowercase_title in product.title.lower()) and
+                (not lowercase_product_type or lowercase_product_type in product.product_type.lower()) and
+                (not lowercase_vendor or lowercase_vendor in product.vendor.lower()) and
+                # Check if all tags are present
+                (not lowercase_tags or all(
+                    tag in product.tags.lower() for tag in lowercase_tags))
+                     ):
+                matching_products.append(product)
+
+        pretty_product_info = self._pretty_product_info(
+            matching_products, output, sortby)
 
         logger.info(f"Found {len(products)} products.")
         return pretty_product_info
@@ -117,11 +153,11 @@ class GetAllProductsTool(BaseTool):
 
         return info
 
-    def _pretty_product_info(self, products: List[Dict], output: List[str], sortby: str):
+    def _pretty_product_info(self, matching_products: List[Dict], output: List[str], sortby: str):
         product_info_list = []
         pretty_product_info = ""
 
-        for product in products:
+        for product in matching_products:
             # generate product details directly
             info = self._generate_product_details(product, output)
             product_info_list.append(info)
@@ -151,7 +187,7 @@ class GetAllProductsTool(BaseTool):
 
         # Convert the keys in the first dict in product_info_list to their actual versions
         headers = [field_to_header.get(key, key)
-                for key in product_info_list[0].keys()]
+                   for key in product_info_list[0].keys()]
 
         # Convert the dictionaries in product_info_list to lists
         product_info_list = [list(d.values()) for d in product_info_list]
@@ -159,6 +195,6 @@ class GetAllProductsTool(BaseTool):
         # Now pass headers to tabulate()
         table = tabulate(product_info_list, headers=headers, tablefmt="pretty")
         table = table.replace(" ", "\u00A0")
-        pretty_product_info = f"Found {len(products)} products:\n{table}"
+        pretty_product_info = f"Found {len(matching_products)} products:\n{table}"
 
         return pretty_product_info

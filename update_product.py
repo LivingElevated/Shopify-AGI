@@ -102,7 +102,7 @@ class UpdateProductTool(BaseTool):
     )
     args_schema: Type[BaseModel] = UpdateProductInput
     goals: List[str] = []
-    permission_required: bool = False
+    permission_required: bool = True
     resource_manager: Optional[FileManager] = None
     tool_response_manager: Optional[ToolResponseQueryManager] = None
 
@@ -350,7 +350,7 @@ class UpdateProductTool(BaseTool):
        # if not title and product:
        #     title = product.title
        # if not description and product:
-       #     description = product.description
+       #     description = product.body_html
        # if not product_type and product:
        #     product_type = product.product_type
        # if not tags and product:
