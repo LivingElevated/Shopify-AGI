@@ -208,20 +208,27 @@ class UpdateProductTool(BaseTool):
         logger.info(generated_info)
         return generated_info
     
-    def _generate_value_based_on_flag(self, generate_flag: bool, old_value: str, new_value: Optional[str], task_description: str = None) -> Any:
-        if generate_flag:
-            if task_description:
-                # Generate new value based on task description, old value, and possibly new value
-                return self.generate_info(task_description)
+
+    def _generate_value_based_on_flag(self, generate_flag: bool, old_value: str, new_value: Optional[str], task_description: str = None, context: str = None) -> Any:
+        if generate_flag and task_description:
+            # Combine task description and context for more informative message
+            if context:
+                task_description = f"Use the context of '{context}' to: {task_description}"
             else:
-                # Handle cases where task description is missing
-                logger.warning(
-                    "Task description is missing for generating new value.")
-                return old_value
+                task_description = task_description
+            # Generate new value based on combined description, old value, and possibly new value
+            print(task_description)
+            return self.generate_info(task_description)
+        elif generate_flag:
+            # Handle cases where task description is missing
+            logger.warning(
+                "Task description is missing for generating new value.")
+            return new_value if new_value is not None else old_value
         else:
             return new_value if new_value is not None else old_value
+        
 
-    def _generate_price_based_on_flag(self, generate_flag: bool, old_value: str, new_value: str, product, title, description, product_type, tags) -> Tuple[str, Optional[str]]:
+    def _generate_price_based_on_flag(self, generate_flag: bool, old_value: str, new_value: str, product, title, description, product_type, tags, context) -> Tuple[str, Optional[str]]:
         print("Title:", title)
         print("Description:", description)
         print("Product Type:", product_type)
@@ -241,26 +248,54 @@ class UpdateProductTool(BaseTool):
         print("Product Type:", product_type)
         print("Tags:", tags)
         
+        if new_value:
+            price_data = new_value
+        else:
+            price_data = old_value
+
         if generate_flag:
-            if new_value:
-                return new_value, None
-            else:
-                price, price_metadata = self._generate_specific_price(
-                    title, description, product_type, tags)
-                return price, price_metadata
+            price, price_metadata = self._generate_specific_price(
+                title, description, product_type, tags, price_data, context)
+            return price, price_metadata
         elif new_value:
             return new_value, None
         else:
             return old_value, None
 
-    def _generate_vendor_based_on_flag(self, generate_flag: bool, old_value: str, new_value: str, product, title, description, product_type, tags, price) -> Tuple[str, Optional[str]]:
+    def _generate_vendor_based_on_flag(self, generate_flag: bool, old_value: str, new_value: str, product, title, description, product_type, tags, price, context) -> Tuple[str, Optional[str]]:
+        print("Title:", title)
+        print("Description:", description)
+        print("Product Type:", product_type)
+        print("Tags:", tags)
+        print("Price:", price)
+
+        if not title and product:
+            title = product.title
+        if not description and product:
+            description = product.body_html
+        if not product_type and product:
+            product_type = product.product_type
+        if not price and product:
+            price = product.price
+        if not tags and product:
+            tags = product.tags
+
+        print("Title:", title)
+        print("Description:", description)
+        print("Product Type:", product_type)
+        print("Tags:", tags)
+        print("Price:", price)
+
+        
+        if new_value:
+            vendor_data = new_value
+        else:
+            vendor_data = old_value
+        
         if generate_flag:
-            if new_value:
-                return new_value, None
-            else:
-                vendor, vendor_metadata = self._generate_specific_vendor(
-                    title, description, product_type, tags, price, product)
-                return vendor, vendor_metadata
+            vendor, vendor_metadata = self._generate_specific_vendor(
+                title, description, product_type, tags, price, vendor_data, context)
+            return vendor, vendor_metadata
         elif new_value:
             return new_value, None
         else:
@@ -334,7 +369,7 @@ class UpdateProductTool(BaseTool):
 
         return tags, tags_metadata
 
-    def _generate_specific_price(self, title, description, product_type, tags) -> Tuple[str, Optional[str]]:
+    def _generate_specific_price(self, title, description, product_type, tags, price_data ,context) -> Tuple[str, Optional[str]]:
         """
         Generate a specific price for a product.
 
@@ -347,22 +382,24 @@ class UpdateProductTool(BaseTool):
         Returns:
             Tuple[str, Optional[str]]: Tuple containing the generated price and metadata (only if there were multiple prices, the response was too long, had a space or contained more than 5 words).
         """
-       # if not title and product:
-       #     title = product.title
-       # if not description and product:
-       #     description = product.body_html
-       # if not product_type and product:
-       #     product_type = product.product_type
-       # if not tags and product:
-       #     tags = product.tags
-
+        print("Generating a specific price...")
         print("Title:", title)
         print("Description:", description)
         print("Product Type:", product_type)
         print("Tags:", tags)
 
-        price_prompt = f"Suggest a suitable price for a product with title {title}, description {description}, type {product_type}, and tags {tags}."
-        price = self.generate_info(price_prompt)
+        price_prompt = f"Suggest a suitable price for a product with title: {title}, description: {description}, type: {product_type}, and tags: {tags}."
+
+        if price_data:
+            context_details = f"Use the context of: {context} and the previous/provided pricing data: {price_data} to:"
+        else:
+            context_details = f"Use the context of: {context} to:"
+
+        # Combine context_details and vendor_prompt
+        task_description = f"{context_details} {price_prompt}"
+        print(task_description)
+        
+        price = self.generate_info(task_description)
 
         price_metadata = None
         # if there are multiple prices or the response is too long or has a space
@@ -373,16 +410,17 @@ class UpdateProductTool(BaseTool):
             if price_range and len(price_range) == 2:
                 price = str((float(price_range[0]) + float(price_range[1])) / 2)
             else:
+                specific_price = f"Based on the previous information, {price}, select a specific price that we should start selling our product at. (Please reply in a single specific numeric value only.)"
+                print(specific_price)
                 # Generate a specific price
-                price = self.generate_info(
-                    f"Based on the previous information, {price_prompt}, select a specific price that we should start selling our product at. (Please reply in a single specific numeric value only.)")
+                price = self.generate_info(specific_price)
 
         # convert price to float
         price = float(price.replace("$", ""))
 
         return price, price_metadata
     
-    def _generate_specific_vendor(self, title, description, product_type, tags, price, product) -> Tuple[str, Optional[str]]:
+    def _generate_specific_vendor(self, title, description, product_type, tags, price, vendor_data, context) -> Tuple[str, Optional[str]]:
         """
         Generate a specific vendor for a product based on title, description, product_type, price, and tags.
 
@@ -396,16 +434,14 @@ class UpdateProductTool(BaseTool):
         Returns:
             Tuple[str, Optional[str]]: A tuple containing the generated vendor and any vendor metadata (None if not applicable).
         """
-        if not title and product:
-            title = product.title
-        if not description and product:
-            description = product.body_html
-        if not product_type and product:
-            product_type = product.product_type
-        if not price and product:
-            price = product.price
-        if not tags and product:
-            tags = product.tags
+        print("Generating a specific vendor...")
+        print("Title:", title)
+        print("Description:", description)
+        print("Product Type:", product_type)
+        print("Tags:", tags)
+        print("Price:", price)
+        print("Vendor Data:", vendor_data)
+
 
         # Prepare the prompt string with available fields
         prompt_parts = {"title": title, "description": description,
@@ -413,24 +449,34 @@ class UpdateProductTool(BaseTool):
 
         vendor_prompt = "Suggest a suitable vendor for a product with "
 
+        if vendor_data:
+            context_details = f"Use the context of: {context} and the previous/provided vendor data: {vendor_data} to:"
+        else:
+            context_details = f"Use the context of '{context}' to:"
+
         for name, value in prompt_parts.items():
             if value is not None:  # If value exists, include it in the prompt
                 if not isinstance(value, str):  # If value is not a string, convert it
                     value = str(value)
-                vendor_prompt += f"{name} {value}, "
+                vendor_prompt += f"{name}: {value}, "
 
         # Remove the last comma and add a period
         vendor_prompt = vendor_prompt.rstrip(", ") + "."
 
-        vendor = self.generate_info(vendor_prompt)
+        # Combine context_details and vendor_prompt
+        task_description = f"{context_details} {vendor_prompt}"
+        print(task_description)
+
+        vendor = self.generate_info(task_description)
 
         vendor_metadata = None
         # if there are multiple vendors or the response is too long
         if "," in vendor or len(vendor.split()) > 5:
             vendor_metadata = vendor  # save the unsuitable vendor as metadata
             # Generate a specific vendor
-            vendor = self.generate_info(
-                f"Based on the previous information, {vendor_prompt} (Please reply in less than 5 words.)")
+            specific_vendor = f"Based on the previous information, {vendor}, select a specific vendor that we should use for our product. (Please reply with no context or details other than the vendor choosen.)"
+            print(specific_vendor)
+            vendor = self.generate_info(specific_vendor)
 
         return vendor, vendor_metadata
     
@@ -677,7 +723,8 @@ class UpdateProductTool(BaseTool):
                 title = self._generate_value_based_on_flag(
                     generate_title, product.title, title,
                     self.generate_title_task_description(
-                        product, title, product_type, vendor)
+                        product, title, product_type, vendor),
+                    context
                 )
                 # List of small words to be in lowercase (customize it according to your needs)
                 small_words = ['a', 'an', 'and', 'as', 'at', 'but', 'by', 'for',
@@ -706,7 +753,8 @@ class UpdateProductTool(BaseTool):
                     generate_description, self.html_to_plain_text(
                         product.body_html), description,
                     self.generate_description_task_description(
-                        product, title, description, product_type, vendor, tags, price)
+                        product, title, description, product_type, vendor, tags, price),
+                    context
                 )
 
                 description = "\n".join(
@@ -726,7 +774,8 @@ class UpdateProductTool(BaseTool):
                 product_type = self._generate_value_based_on_flag(
                     generate_product_type, product.product_type, product_type,
                     self.generate_product_type_task_description(
-                        product, title, description, product_type, vendor, tags, price)
+                        product, title, description, product_type, vendor, tags, price),
+                    context
                 )
 
                 max_length = 255
@@ -744,7 +793,8 @@ class UpdateProductTool(BaseTool):
                 tags = self._generate_value_based_on_flag(
                     generate_tags, product.tags, tags,
                     self.generate_tags_task_description(
-                        product, title, description, product_type, vendor, tags, price)
+                        product, title, description, product_type, vendor, tags, price),
+                    context
                 )
                 tags, tags_metadata = self.trim_tags(tags, 255)
                 print("Trimmed Tags:", tags)
@@ -759,7 +809,12 @@ class UpdateProductTool(BaseTool):
                     generate_price,  # Generate flag
                     product.variants[0].price if product.variants else None,  # Old value
                     price,  # New value
-                    product, title, description, product_type, tags   # Additional arguments
+                    product,  # Additional arguments
+                    title,
+                    description,
+                    product_type,
+                    tags,
+                    context  
                 )
                 print("Updated Price:", price)
 
@@ -773,7 +828,13 @@ class UpdateProductTool(BaseTool):
                     generate_vendor,    # Generate flag
                     product.vendor,  # Old value
                     vendor,  # New value
-                    product, title, description, product_type, tags, price  # Additional arguments
+                    product,  # Additional arguments
+                    title, 
+                    description, 
+                    product_type, 
+                    tags, 
+                    price, 
+                    context
                     )
                 print("Updated Vendor:", vendor)
 
