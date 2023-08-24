@@ -18,7 +18,7 @@ from shopify_config import ShopifyConfig
 from update_product import UpdateProductTool 
 
 
-class SearchAndUpdateProductsInput(BaseModel):
+class BulkUpdateProductsInput(BaseModel):
     search_criteria: dict = Field(
         ...,
         description="Dictionary of key-value pairs for filtering products. Keys can be 'title', 'product_type', 'vendor', or 'tags'."
@@ -77,7 +77,7 @@ class SearchAndUpdateProductsInput(BaseModel):
     )
 
 
-class SearchandUpdateProductsTool(BaseTool):
+class BulkUpdateProductsTool(BaseTool):
     """
     Search And Update Product Tool is used to update  products on Shopify.
     Attributes:
@@ -92,13 +92,13 @@ class SearchandUpdateProductsTool(BaseTool):
     """
     llm: Optional[BaseLlm] = None
     agent_id: int = None
-    name = "Search and Update Product"
+    name = "Bulk Update Products"
     description = (
         "This tool facilitates searching products in Shopify based on various criteria and updating products all of them. "
         "It generates detailed product descriptions, suitable prices, product types, and vendors "
         "using an AI model. The tool also saves this AI-generated information as metafields to the product."
     )
-    args_schema: Type[BaseModel] = SearchAndUpdateProductsInput
+    args_schema: Type[BaseModel] = BulkUpdateProductsInput
     goals: List[str] = []
     permission_required: bool = True
     resource_manager: Optional[FileManager] = None
